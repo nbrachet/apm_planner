@@ -24,7 +24,7 @@
 include(confapp.pri)
 include(base.pri)
 
-macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6 #for universal
+macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9 #for universal
 
 # qmake configuring apps with staticlib poses linking problems
 

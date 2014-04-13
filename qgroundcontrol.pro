@@ -115,7 +115,7 @@ MacBuild {
     QMAKE_INFO_PLIST = Custom-Info.plist
     CONFIG += x86_64
     CONFIG -= x86
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
     ICON = $$BASEDIR/files/APMIcons/icon.icns
     QMAKE_INFO_PLIST = APMPlanner.plist   # Sets the pretty name for the build
 

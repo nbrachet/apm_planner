@@ -34,7 +34,7 @@ macx|macx-g++42|macx-g++|macx-llvm: {
         CONFIG += x86_64 cocoa phonon
         CONFIG -= x86
 
-	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 
         INCLUDEPATH += $$BASEDIR/libs/lib/Frameworks/SDL.framework/Headers
 
