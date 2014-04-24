@@ -691,10 +691,10 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     wp->blockSignals(false);
 
 
-    internals::PointLatLng coord = waypoint->Coord();
-    QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
+    // internals::PointLatLng coord = waypoint->Coord();
+    // QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
     // // QLOG_DEBUG() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
-    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
+    // QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
     // // QLOG_DEBUG() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
 
     firingWaypointChange = NULL;
