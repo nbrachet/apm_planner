@@ -106,7 +106,7 @@ void AutoUpdateCheck::processDownloadedVersionObject(const QString &versionObjec
             && (compareVersionStrings(version,QGC_APPLICATION_VERSION))){
             QLOG_DEBUG() << "Found New Version: " << platform << " "
                         << type << " " << version << " " << locationUrl;
-            if(m_skipVerison != version){
+            if(m_skipVersion != version){
                 emit updateAvailable(version, type, locationUrl, name);
             } else {
                 QLOG_DEBUG() << "Version Skipped at user request";
@@ -173,7 +173,7 @@ bool AutoUpdateCheck::compareVersionStrings(const QString& newVersion, const QSt
             oldBuildSubMoniker = versionEx2.cap(2);
     }
 
-    QLOG_DEBUG() << "Verison Compare:" <<QString().sprintf(" New Version %d.%d.%d compared to Old Version %d.%d.%d",
+    QLOG_DEBUG() << "Version Compare:" <<QString().sprintf("New Version %d.%d.%d compared to Old Version %d.%d.%d",
                                                  newMajor,newMinor,newBuild, currentMajor, currentMinor,currentBuild);
     if (newMajor>currentMajor){
         // A Major release
@@ -227,7 +227,7 @@ bool AutoUpdateCheck::compareVersionStrings(const QString& newVersion, const QSt
 
 void AutoUpdateCheck::setSkipVersion(const QString& version)
 {
-    m_skipVerison = version;
+    m_skipVersion = version;
     writeSettings();
 }
 
@@ -248,7 +248,7 @@ void AutoUpdateCheck::loadSettings()
     QSettings settings;
     settings.beginGroup("AUTO_UPDATE");
     m_isAutoUpdateEnabled = settings.value("ENABLED", true).toBool();
-    m_skipVerison = settings.value("SKIP_VERSION", "0.0.0").toString();
+    m_skipVersion = settings.value("SKIP_VERSION", "0.0.0").toString();
     m_releaseType = settings.value("RELEASE_TYPE", APP_TYPE).toString();
     settings.endGroup();
 }
@@ -259,7 +259,7 @@ void AutoUpdateCheck::writeSettings()
     QSettings settings;
     settings.beginGroup("AUTO_UPDATE");
     settings.setValue("ENABLED", m_isAutoUpdateEnabled);
-    settings.setValue("SKIP_VERSION", m_skipVerison);
+    settings.setValue("SKIP_VERSION", m_skipVersion);
     settings.setValue("RELEASE_TYPE", m_releaseType);
     settings.endGroup();
     settings.sync();
