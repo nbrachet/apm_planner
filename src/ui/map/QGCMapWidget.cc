@@ -334,6 +334,8 @@ void QGCMapWidget::storeSettings()
 
 void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
 {
+    QLOG_DEBUG() << "mouseDoubleClickEvent pos:" << event->pos() << " posF:" << event->posF();
+
     // If a waypoint manager is available
     if (currWPManager)
     {
