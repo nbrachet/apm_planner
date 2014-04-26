@@ -155,11 +155,11 @@ namespace mapcontrol
 
         // Q_PROPERTY(int MaxZoom READ MaxZoom WRITE SetMaxZoom)
         Q_PROPERTY(int MinZoom READ MinZoom WRITE SetMinZoom)
-                Q_PROPERTY(bool ShowTileGridLines READ ShowTileGridLines WRITE SetShowTileGridLines)
-                Q_PROPERTY(double Zoom READ ZoomTotal WRITE SetZoom)
-                Q_PROPERTY(qreal Rotate READ Rotate WRITE SetRotate)
-                Q_ENUMS(internals::MouseWheelZoomType::Types)
-                Q_ENUMS(internals::GeoCoderStatusCode::Types)
+        Q_PROPERTY(bool ShowTileGridLines READ ShowTileGridLines WRITE SetShowTileGridLines)
+        Q_PROPERTY(double Zoom READ ZoomTotal WRITE SetZoom)
+        Q_PROPERTY(qreal Rotate READ Rotate WRITE SetRotate)
+        Q_ENUMS(internals::MouseWheelZoomType::Types)
+        Q_ENUMS(internals::GeoCoderStatusCode::Types)
 
     public:
                 QSize sizeHint() const;
