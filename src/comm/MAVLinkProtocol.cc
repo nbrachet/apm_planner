@@ -33,6 +33,7 @@
 #include <QSettings>
 #include <QDesktopServices>
 #include <QDir>
+#include <QDataStream>
 
 
 #ifdef QGC_PROTOBUF_ENABLED
@@ -59,7 +60,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
     m_actionGuardEnabled(false),
     m_actionRetransmissionTimeout(100),
     versionMismatchIgnore(false),
-    systemId(QGC::defaultSystemId)
+    systemId(QGC::defaultSystemId),
+    m_throwAwayGCSPackets(false)
 {
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
@@ -80,6 +82,10 @@ MAVLinkProtocol::MAVLinkProtocol() :
     }
 
     emit versionCheckChanged(m_enable_version_check);
+}
+void MAVLinkProtocol::throwAwayGCSPackets(bool throwaway)
+{
+    m_throwAwayGCSPackets = throwaway;
 }
 
 void MAVLinkProtocol::loadSettings()
@@ -294,18 +300,20 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Log data
             if (m_loggingEnabled && m_logfile)
             {
-                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)] = {0};
                 quint64 time = QGC::groundTimeUsecs();
-                memcpy(buf, (void*)&time, sizeof(quint64));
-                // Write message to buffer
-                mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
-                //we need to write the maximum package length for having a
-                //consistent file structure and beeing able to parse it again
-                int len = MAVLINK_MAX_PACKET_LEN + sizeof(quint64);
-                QByteArray b((const char*)buf, len);
-                if(m_logfile->write(b) != len)
+
+                QDataStream outStream(m_logfile);
+                outStream.setByteOrder(QDataStream::BigEndian);
+                outStream << time; // write time stamp
+                // write headers, payload (incs CRC)
+                int bytesWritten = outStream.writeRawData((const char*)&message.magic,
+                                     static_cast<uint>(MAVLINK_NUM_NON_PAYLOAD_BYTES + message.len));
+
+                if(bytesWritten != (MAVLINK_NUM_NON_PAYLOAD_BYTES + message.len))
                 {
-                    emit protocolStatusMessage(tr("MAVLink Logging failed"), tr("Could not write to file %1, disabling logging.").arg(m_logfile->fileName()));
+                    emit protocolStatusMessage(tr("MAVLink Logging failed"),
+                                               tr("Could not write to file %1, disabling logging.")
+                                               .arg(m_logfile->fileName()));
                     // Stop logging
                     stopLogging();
                 }
@@ -316,6 +324,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // before emitting the packetReceived signal
 
             UASInterface* uas = UASManager::instance()->getUASForId(message.sysid);
+            //qDebug() << "MAVLinkProtocol::receiveBytes" << uas;
 
             // Check and (if necessary) create UAS object
             if (uas == NULL && message.msgid == MAVLINK_MSG_ID_HEARTBEAT)
@@ -329,6 +338,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // Check if the UAS has the same id like this system
                 if (message.sysid == getSystemId())
                 {
+                    if (m_throwAwayGCSPackets)
+                    {
+                        //If replaying, we have to assume that it's just hearing ground control traffic
+                        return;
+                    }
                     emit protocolStatusMessage(tr("SYSTEM ID CONFLICT!"), tr("Warning: A second system is using the same system id (%1)").arg(getSystemId()));
                 }
 

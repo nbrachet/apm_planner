@@ -16,9 +16,12 @@
 #include <QSqlError>
 #include <QsLog.h>
 #include <QStandardItemModel>
+#include "MainWindow.h"
 AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
     m_uas(NULL),
-    m_logDownloadDialog(NULL)
+    m_logDownloadDialog(NULL),
+    m_updateTimer(NULL),
+    m_tlogReplayEnabled(false)
 {
     m_startIndex = 0;
     m_axisGroupingDialog = 0;
@@ -90,9 +93,6 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
 
     ui.logTypeLabel->setText("<p align=\"center\"><span style=\" font-size:24pt; color:#0000ff;\">Live Data</span></p>");
 
-    QTimer *timer = new QTimer(this);
-    connect(timer,SIGNAL(timeout()),m_plot,SLOT(replot()));
-    timer->start(500);
 
     connect(ui.graphControlsPushButton,SIGNAL(clicked()),this,SLOT(graphControlsButtonClicked()));
     model = new QStandardItemModel();
@@ -107,7 +107,26 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
 
     connect(ui.downloadPushButton, SIGNAL(clicked()), this, SLOT(showLogDownloadDialog()));
     ui.downloadPushButton->setEnabled(false);
+    connect(ui.loadTLogButton,SIGNAL(clicked()),this,SLOT(replyTLogButtonClicked()));
 }
+void AP2DataPlot2D::replyTLogButtonClicked()
+{
+    if (m_tlogReplayEnabled)
+    {
+        MainWindow::instance()->disableTLogReplayBar();
+        m_tlogReplayEnabled = false;
+        ui.loadTLogButton->setText("Enable Log Playback");
+    }
+    else
+    {
+        MainWindow::instance()->enableTLogReplayBar();
+        m_tlogReplayEnabled = true;
+        ui.loadTLogButton->setText("Disable Log Playback");
+    }
+
+
+}
+
 void AP2DataPlot2D::xAxisChanged(QCPRange range)
 {
     ui.horizontalScrollBar->setValue(qRound(range.center())); // adjust position of scroll bar slider
@@ -122,6 +141,28 @@ void AP2DataPlot2D::horizontalScrollMoved(int value)
       m_plot->replot();
     }
     return;
+}
+void AP2DataPlot2D::showEvent(QShowEvent *evt)
+{
+    if (m_updateTimer)
+    {
+        m_updateTimer->stop();
+        m_updateTimer->deleteLater();
+        m_updateTimer = 0;
+    }
+    m_updateTimer = new QTimer(this);
+    connect(m_updateTimer,SIGNAL(timeout()),m_plot,SLOT(update()));
+    m_updateTimer->start(500);
+}
+
+void AP2DataPlot2D::hideEvent(QHideEvent *evt)
+{
+    if (m_updateTimer)
+    {
+        m_updateTimer->stop();
+        m_updateTimer->deleteLater();
+        m_updateTimer = 0;
+    }
 }
 
 void AP2DataPlot2D::verticalScrollMoved(int value)
@@ -397,7 +438,9 @@ void AP2DataPlot2D::activeUASSet(UASInterface* uas)
     m_currentIndex = QDateTime::currentMSecsSinceEpoch();
     m_startIndex = m_currentIndex;
     m_scrollStartIndex = 0;
+    ui.horizontalScrollBar->blockSignals(true);
     ui.horizontalScrollBar->setMinimum(m_scrollStartIndex + m_timeDiff);
+    ui.horizontalScrollBar->blockSignals(false);
     m_uas = uas;
     connect(m_uas,SIGNAL(valueChanged(int,QString,QString,double,quint64)),this,SLOT(valueChanged(int,QString,QString,double,quint64)));
     connect(m_uas,SIGNAL(valueChanged(int,QString,QString,qint8,quint64)),this,SLOT(valueChanged(int,QString,QString,qint8,quint64)));

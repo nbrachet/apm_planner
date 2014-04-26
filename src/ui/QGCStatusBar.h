@@ -47,8 +47,12 @@ public slots:
     void logging(bool checked);
     /** @brief Set log playing component */
     void setLogPlayer(QGCMAVLinkLogPlayer* player);
+    QGCMAVLinkLogPlayer *logPlayer() { return player; }
     virtual void paintEvent(QPaintEvent * event);
-
+private slots:
+        void activeUASSet(UASInterface* uas);
+        void uasConnected();
+        void uasDisconnected();
 protected:
     void storeSettings();
     void loadSettings();
@@ -57,6 +61,8 @@ protected:
     QGCMAVLinkLogPlayer* player;
     bool changed;
     QString lastLogDirectory;
+private:
+    UASInterface *m_uas;
 };
 
 #endif // QGCSTATUSBAR_H
