@@ -491,14 +491,7 @@ void QGCMapWidget::updateGlobalPosition()
 
         // Set new lat/lon position of UAV icon
         internals::PointLatLng pos_lat_lon = internals::PointLatLng(system->getLatitude(), system->getLongitude());
-        uav->SetUAVPos(pos_lat_lon, system->getAltitude());
-
-        if(uas == system){
-            // save the last know postion
-            m_lastLat = system->getLatitude();
-            m_lastLon = system->getLongitude();
-        }
-
+        uav->SetUAVPos(pos_lat_lon, system->getAltitudeAMSL());
         // Follow status
         if (followUAVEnabled && (system->getUASID() == followUAVID) && isValidGpsLocation(system)) {
             SetCurrentPosition(pos_lat_lon);
@@ -528,14 +521,7 @@ void QGCMapWidget::updateLocalPosition()
 
         // Set new lat/lon position of UAV icon
         internals::PointLatLng pos_lat_lon = internals::PointLatLng(system->getLatitude(), system->getLongitude());
-        uav->SetUAVPos(pos_lat_lon, system->getAltitude());
-
-        if(uas == system){
-            // save the last know postion
-            m_lastLat = system->getLatitude();
-            m_lastLon = system->getLongitude();
-        }
-
+        uav->SetUAVPos(pos_lat_lon, system->getAltitudeAMSL());
         // Follow status
         if (followUAVEnabled && (system->getUASID() == followUAVID) && isValidGpsLocation(system)) {
             SetCurrentPosition(pos_lat_lon);
