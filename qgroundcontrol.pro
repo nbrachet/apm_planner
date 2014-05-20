@@ -81,6 +81,7 @@ DebugBuild {
 ReleaseBuild {
     DESTDIR = $${OUT_PWD}/release
     BUILDDIR = $${OUT_PWD}/build-release
+    DEFINES += NDEBUG
 }
 OBJECTS_DIR = $${BUILDDIR}/obj
 MOC_DIR = $${BUILDDIR}/moc
