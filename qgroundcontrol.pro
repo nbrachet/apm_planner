@@ -825,7 +825,9 @@ OTHER_FILES += \
     qml/components/AltitudeIndicator.qml \
     qml/components/SpeedIndicator.qml \
     qml/components/CompassIndicator.qml \
-    qml/components/PitchIndicator.qml
+    qml/components/PitchIndicator.qml \
+    qml/components/StatusMessageIndicator.qml \
+    qml/components/InformationOverlayIndicator.qml
 
 OTHER_FILES += \
     qml/ApmToolBar.qml \
