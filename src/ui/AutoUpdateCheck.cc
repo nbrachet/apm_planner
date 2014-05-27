@@ -253,7 +253,7 @@ void AutoUpdateCheck::loadSettings()
     QSettings settings;
     settings.beginGroup("AUTO_UPDATE");
     m_isAutoUpdateEnabled = settings.value("ENABLED", true).toBool();
-    m_skipVerison = settings.value("SKIP_VERSION", "0.0.0").toString();
+    m_skipVersion = settings.value("SKIP_VERSION", "0.0.0").toString();
     m_releaseType = settings.value("RELEASE_TYPE", define2string(APP_TYPE)).toString();
     settings.endGroup();
 }
