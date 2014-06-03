@@ -61,10 +61,12 @@ ApmFirmwareConfig::ApmFirmwareConfig(QWidget *parent) : AP2ConfigWidget(parent),
     loadSettings();
     //QNetworkRequest req(QUrl("https://raw.github.com/diydrones/binary/master/Firmware/firmware2.xml"));
     QSettings settings;
+    settings.beginGroup("QGC_MAINWINDOW");
     if (settings.contains("ADVANCED_MODE"))
     {
         m_isAdvancedMode = settings.value("ADVANCED_MODE").toBool();
     }
+    settings.endGroup();
 
     m_networkManager = new QNetworkAccessManager(this);
 
@@ -215,7 +217,9 @@ void ApmFirmwareConfig::showEvent(QShowEvent *)
     // Start Port scanning
     m_timer->start(2000);
     if(ui.stackedWidget->currentIndex() == 0)
+    {
         MainWindow::instance()->toolBar().disableConnectWidget(true);
+    }
     QSettings settings;
     if (settings.contains("ADVANCED_MODE"))
     {
@@ -228,12 +232,16 @@ void ApmFirmwareConfig::hideEvent(QHideEvent *)
 {
     // Stop Port scanning
     m_timer->stop();
-    MainWindow::instance()->toolBar().disableConnectWidget(false);
+    if(ui.stackedWidget->currentIndex() == 0)
+    {
+        MainWindow::instance()->toolBar().disableConnectWidget(false);
+    }
+    //MainWindow::instance()->toolBar().disableConnectWidget(false);
 }
 
 void ApmFirmwareConfig::uasConnected()
 {
-    MainWindow::instance()->toolBar().disableConnectWidget(false);
+   // MainWindow::instance()->toolBar().disableConnectWidget(false);
     ui.stackedWidget->setCurrentIndex(1);
 }
 void ApmFirmwareConfig::cancelButtonClicked()
@@ -499,6 +507,11 @@ void ApmFirmwareConfig::trunkFirmwareButtonClicked()
 }
 
 
+void ApmFirmwareConfig::px4Warning(QString message)
+{
+    QMessageBox::information(this,tr("Warning"),tr("Warning: ") + message,"Continue");
+    ui.statusLabel->setText(tr("Error during upload"));
+}
 void ApmFirmwareConfig::px4Error(QString error)
 {
     QMessageBox::information(0,tr("Error"),tr("Error during upload:") + error);
@@ -604,6 +617,7 @@ void ApmFirmwareConfig::downloadFinished()
         connect(m_px4uploader,SIGNAL(finished()),this,SLOT(px4Terminated()));
         connect(m_px4uploader,SIGNAL(flashProgress(qint64,qint64)),this,SLOT(firmwareDownloadProgress(qint64,qint64)));
         connect(m_px4uploader,SIGNAL(error(QString)),this,SLOT(px4Error(QString)));
+        connect(m_px4uploader,SIGNAL(warning(QString)),this,SLOT(px4Warning(QString)));
         connect(m_px4uploader,SIGNAL(done()),this,SLOT(px4Finished()));
         connect(m_px4uploader,SIGNAL(requestDevicePlug()),this,SLOT(requestDeviceReplug()));
         connect(m_px4uploader,SIGNAL(devicePlugDetected()),this,SLOT(devicePlugDetected()));

@@ -39,7 +39,7 @@ This file is part of the APM_PLANNER project
 #include <QTimer>
 
 APMToolBar::APMToolBar(QWidget *parent):
-    QDeclarativeView(parent), m_uas(NULL), m_currentLink(NULL)
+    QDeclarativeView(parent), m_uas(NULL), m_currentLink(NULL), m_disableOverride(false)
 {
     // Configure our QML object
     QLOG_DEBUG() << "qmlBaseDir" << QGC::shareDirectory();
@@ -365,7 +365,7 @@ void APMToolBar::updateLinkDisplay(LinkInterface* link)
     QObject *object = rootObject();
 
     if (link && object){
-        qint64 baudrate = link->getNominalDataRate();
+        qint64 baudrate = link->getConnectionSpeed();
         object->setProperty("baudrateLabel", QString::number(baudrate));
 
         QString linkName = link->getName();
@@ -470,10 +470,17 @@ void APMToolBar::stopAnimation()
 {
     rootObject()->setProperty("stopAnimation",QVariant(true));
 }
+void APMToolBar::overrideDisableConnectWidget(bool disable)
+{
+    m_disableOverride = disable;
+}
 
 void APMToolBar::disableConnectWidget(bool disable)
 {
-    rootObject()->setProperty("disableConnectWidget",QVariant(disable));
+    if (!m_disableOverride)
+    {
+        rootObject()->setProperty("disableConnectWidget",QVariant(disable));
+    }
 }
 
 void APMToolBar::parameterChanged(int uas, int component, int parameterCount,

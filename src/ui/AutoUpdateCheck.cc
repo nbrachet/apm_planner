@@ -5,6 +5,10 @@
 #include <QtScript/QScriptValueIterator>
 #include <QMessageBox>
 #include <QSettings>
+#include "QGC.h"
+
+#define VERSION_REGEX "(\\d*\\.\\d+\\.?\\d+)-?(rc\\d)?"
+
 
 AutoUpdateCheck::AutoUpdateCheck(QObject *parent) :
     QObject(parent),
@@ -102,7 +106,7 @@ void AutoUpdateCheck::processDownloadedVersionObject(const QString &versionObjec
         QString name = entry.property("name").toString();
         QString locationUrl = entry.property("url").toString();
 
-        if ((platform == APP_PLATFORM) && (type == APP_TYPE)
+        if ((platform == define2string(APP_PLATFORM)) && (type == define2string(APP_TYPE))
             && (compareVersionStrings(version,QGC_APPLICATION_VERSION))){
             QLOG_DEBUG() << "Found New Version: " << platform << " "
                         << type << " " << version << " " << locationUrl;
@@ -136,7 +140,8 @@ bool AutoUpdateCheck::compareVersionStrings(const QString& newVersion, const QSt
 
     QString newBuildSubMoniker, oldBuildSubMoniker; // holds if the build is a rc or dev build
 
-    QRegExp versionEx("(\\d*\\.\\d+\\.?\\d?)-?(rc\\d)?");
+
+    QRegExp versionEx(VERSION_REGEX);
     QString versionstr = "";
     int pos = versionEx.indexIn(newVersion);
     if (pos > -1) {
@@ -155,7 +160,7 @@ bool AutoUpdateCheck::compareVersionStrings(const QString& newVersion, const QSt
             newBuildSubMoniker = versionEx.cap(2);
     }
 
-    QRegExp versionEx2("(\\d*\\.\\d+\\.?\\d?)-?(rc\\d)?");
+    QRegExp versionEx2(VERSION_REGEX);
     versionstr = "";
     pos = versionEx2.indexIn(currentVersion);
     if (pos > -1) {
@@ -249,7 +254,7 @@ void AutoUpdateCheck::loadSettings()
     settings.beginGroup("AUTO_UPDATE");
     m_isAutoUpdateEnabled = settings.value("ENABLED", true).toBool();
     m_skipVerison = settings.value("SKIP_VERSION", "0.0.0").toString();
-    m_releaseType = settings.value("RELEASE_TYPE", APP_TYPE).toString();
+    m_releaseType = settings.value("RELEASE_TYPE", define2string(APP_TYPE)).toString();
     settings.endGroup();
 }
 

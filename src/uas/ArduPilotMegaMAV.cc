@@ -116,7 +116,9 @@ QString ApmPlane::stringForMode(int aMode)
     case CRUISE:
         return "Cruise";
         break;
-    case RESERVED_8:
+    case AUTOTUNE:
+        return "Auto Tune";
+        break;
     case RESERVED_9:
     case RESERVED_13:
     case RESERVED_14:
@@ -301,11 +303,18 @@ void ArduPilotMegaMAV::uasConnected()
 void ArduPilotMegaMAV::uasDisconnected()
 {
     QLOG_INFO() << "ArduPilotMegaMAV APM disconnected";
-    mavlink->stopLogging();
+    if (mavlink)
+    {
+        mavlink->stopLogging();
+    }
 }
 
 void ArduPilotMegaMAV::createNewMAVLinkLog(uint8_t type)
 {
+    if (!mavlink)
+    {
+
+    }
     QString subDir;
 
     // This creates a log in subdir based on the vehicle
@@ -360,6 +369,7 @@ void ArduPilotMegaMAV::createNewMAVLinkLog(uint8_t type)
 void ArduPilotMegaMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Let UAS handle the default message set
+    //qDebug() << "Message type:" << message.sysid << message.msgid;
     UAS::receiveMessage(link, message);
 
     if (message.sysid == uasId) {
