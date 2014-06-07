@@ -336,7 +336,11 @@ FORMS += \
     src/ui/mission/QGCMissionOther.ui \
     src/ui/mission/QGCMissionNavWaypoint.ui \
     src/ui/mission/QGCMissionDoJump.ui \
+    src/ui/mission/QGCMissionDoSetServo.ui \
+    src/ui/mission/QGCMissionDoRepeatServo.ui \
+    src/ui/mission/QGCMissionDoDigicamControl.ui \
     src/ui/mission/QGCMissionConditionDelay.ui \
+    src/ui/mission/QGCMissionConditionYaw.ui \
     src/ui/mission/QGCMissionNavLoiterUnlim.ui \
     src/ui/mission/QGCMissionNavLoiterTurns.ui \
     src/ui/mission/QGCMissionNavLoiterTime.ui \
@@ -516,7 +520,11 @@ HEADERS += \
     src/ui/mission/QGCMissionOther.h \
     src/ui/mission/QGCMissionNavWaypoint.h \
     src/ui/mission/QGCMissionDoJump.h \
+    src/ui/mission/QGCMissionDoSetServo.h \
+    src/ui/mission/QGCMissionDoRepeatServo.h \
+    src/ui/mission/QGCMissionDoDigicamControl.h \
     src/ui/mission/QGCMissionConditionDelay.h \
+    src/ui/mission/QGCMissionConditionYaw.h \
     src/ui/mission/QGCMissionNavLoiterUnlim.h \
     src/ui/mission/QGCMissionNavLoiterTurns.h \
     src/ui/mission/QGCMissionNavLoiterTime.h \
@@ -721,7 +729,11 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionOther.cc \
     src/ui/mission/QGCMissionNavWaypoint.cc \
     src/ui/mission/QGCMissionDoJump.cc \
+    src/ui/mission/QGCMissionDoSetServo.cc \
+    src/ui/mission/QGCMissionDoRepeatServo.cc \
+    src/ui/mission/QGCMissionDoDigicamControl.cc \
     src/ui/mission/QGCMissionConditionDelay.cc \
+    src/ui/mission/QGCMissionConditionYaw.cc \
     src/ui/mission/QGCMissionNavLoiterUnlim.cc \
     src/ui/mission/QGCMissionNavLoiterTurns.cc \
     src/ui/mission/QGCMissionNavLoiterTime.cc \
