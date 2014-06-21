@@ -295,7 +295,6 @@ FORMS += \
     src/ui/WaypointList.ui \
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
-    src/ui/DebugConsole.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
     src/ui/AudioOutputWidget.ui \
@@ -412,7 +411,8 @@ FORMS += \
     src/ui/AutoUpdateDialog.ui \
     src/uas/LogDownloadDialog.ui \
     src/ui/PrimaryFlightDisplayQML.ui \
-    src/ui/configuration/CompassMotorCalibrationDialog.ui
+    src/ui/configuration/CompassMotorCalibrationDialog.ui \
+    src/ui/MissionElevationDisplay.ui
 
 HEADERS += \
     src/MG.h \
@@ -453,7 +453,6 @@ HEADERS += \
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
-    src/ui/DebugConsole.h \
     src/ui/HDDisplay.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/AudioOutputWidget.h \
@@ -634,7 +633,8 @@ HEADERS += \
     src/ui/PrimaryFlightDisplayQML.h \
     src/ui/configuration/CompassMotorCalibrationDialog.h \
     src/comm/MAVLinkDecoder.h \
-    src/comm/MAVLinkProtocol.h
+    src/comm/MAVLinkProtocol.h \
+    src/ui/MissionElevationDisplay.h
 #    libs/sik_uploader/qsikuploader.h \
 #    libs/sik_uploader/sikuploader.h \
 
@@ -672,7 +672,6 @@ SOURCES += src/main.cc \
     src/ui/ObjectDetectionView.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
-    src/ui/DebugConsole.cc \
     src/ui/HDDisplay.cc \
     src/ui/MAVLinkSettingsWidget.cc \
     src/ui/AudioOutputWidget.cc \
@@ -850,7 +849,8 @@ SOURCES += src/main.cc \
     src/ui/PrimaryFlightDisplayQML.cpp \
     src/ui/configuration/CompassMotorCalibrationDialog.cpp \
     src/comm/MAVLinkDecoder.cc \
-    src/comm/MAVLinkProtocol.cc
+    src/comm/MAVLinkProtocol.cc \
+    src/ui/MissionElevationDisplay.cpp
 #    libs/sik_uploader/qsikuploader.cpp \
 #    libs/sik_uploader/sikuploader.cpp \
 
