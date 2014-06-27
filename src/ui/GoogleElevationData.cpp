@@ -1,3 +1,25 @@
+/*===================================================================
+APM_PLANNER Open Source Ground Control Station
+
+(c) 2014 APM_PLANNER PROJECT <http://www.diydrones.com>
+(c) author: Bill Bonney <billbonney@communistech.com>
+
+This file is part of the APM_PLANNER project
+
+    APM_PLANNER is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    APM_PLANNER is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with APM_PLANNER. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 #include "QsLog.h"
 #include "GoogleElevationData.h"
 #include "Waypoint.h"
@@ -37,12 +59,10 @@ void GoogleElevationData::httpFinished()
 
     // Finished donwloading the elevation information
     if (m_networkReply->error()) {
-        // [TODO] cleanup download failed
-#ifdef QT_DEBUG
+        // cleanup download failed
         QMessageBox::information(NULL, tr("HTTP"),
                                  tr("Download failed: %1.")
                                  .arg(m_networkReply->errorString()));
-#endif
     } else {
         // Process downloadeed object
         processDownloadedObject(QString(m_networkReply->readAll()));
@@ -124,6 +144,7 @@ void GoogleElevationData::processDownloadedObject(const QString &jsonObject)
     }
 
     QList<Waypoint*> elevationWaypoints;
+    double averageResolution = 0.0;
 
     QScriptValue entries = result.property("results");
     QScriptValueIterator it(entries);
@@ -134,7 +155,7 @@ void GoogleElevationData::processDownloadedObject(const QString &jsonObject)
         double elevation = entry.property("elevation").toNumber();
         double latitude = entry.property("location").property("lat").toNumber();
         double longitude = entry.property("location").property("lng").toNumber();
-//        double resolution = entry.property("resolution").toNumber();
+        double resolution = entry.property("resolution").toNumber();
 
         QLOG_DEBUG() << "elevation loc: " << latitude << "," << longitude;
         QLOG_DEBUG() << "elevation alt" << elevationWaypoints.count() << ":" << elevation;
@@ -142,9 +163,9 @@ void GoogleElevationData::processDownloadedObject(const QString &jsonObject)
         Waypoint* wp = new Waypoint(elevationWaypoints.count(), latitude, longitude, elevation,
                                     0.0,0.0,0.0,0.0,true,false,MAV_FRAME_GLOBAL);
         elevationWaypoints.append(wp);
+        averageResolution+= resolution;
     }
-
     elevationWaypoints.removeLast(); // the last one seems defunct.
-
-    emit elevationDataReady(elevationWaypoints);
+    averageResolution = averageResolution/elevationWaypoints.count();
+    emit elevationDataReady(elevationWaypoints, averageResolution);
 }
