@@ -17,6 +17,7 @@
 #include <QsLog.h>
 #include <QStandardItemModel>
 #include "MainWindow.h"
+#include "ArduPilotMegaMAV.h"
 AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
     m_uas(NULL),
     m_logDownloadDialog(NULL),
@@ -36,7 +37,7 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
 
     QDateTime utc = QDateTime::currentDateTimeUtc();
     utc.setTimeSpec(Qt::LocalTime);
-    m_timeDiff = QDateTime::currentDateTime().msecsTo(utc);
+    //m_timeDiff = QDateTime::currentDateTime().msecsTo(utc);
     m_plot = new QCustomPlot(ui.widget);
     m_plot->setInteraction(QCP::iRangeDrag, true);
     m_plot->setInteraction(QCP::iRangeZoom, true);
@@ -58,7 +59,8 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
 
     m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setTickLabelType(QCPAxis::ltDateTime);
     m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setDateTimeFormat("hh:mm:ss");
-    m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(m_timeDiff / 1000,(m_timeDiff / 1000) + 100); //Default range of 0-100 milliseconds?
+    m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setDateTimeSpec(Qt::UTC);
+    m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100); //Default range of 0-100 milliseconds?
 
 
     m_plot->plotLayout()->addElement(0, 0, m_wideAxisRect);
@@ -98,7 +100,6 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
     model = new QStandardItemModel();
     connect(ui.toKMLPushButton, SIGNAL(clicked()), this, SIGNAL(toKMLClicked()));
     connect(ui.horizontalScrollBar,SIGNAL(sliderMoved(int)),this,SLOT(horizontalScrollMoved(int)));
-    connect(ui.verticalScrollBar,SIGNAL(sliderMoved(int)),this,SLOT(verticalScrollMoved(int)));
 
     connect(ui.horizontalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(horizontalScrollMoved(int)));
     connect(ui.verticalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(verticalScrollMoved(int)));
@@ -131,6 +132,12 @@ void AP2DataPlot2D::xAxisChanged(QCPRange range)
 {
     ui.horizontalScrollBar->setValue(qRound(range.center())); // adjust position of scroll bar slider
     ui.horizontalScrollBar->setPageStep(qRound(range.size())); // adjust size of scroll bar slider
+    double totalrange = m_scrollEndIndex - m_scrollStartIndex;
+    double currentrange = range.upper - range.lower;
+
+    disconnect(ui.verticalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(verticalScrollMoved(int)));
+    ui.verticalScrollBar->setValue(100 * (currentrange / totalrange));
+    connect(ui.verticalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(verticalScrollMoved(int)));
 }
 
 void AP2DataPlot2D::horizontalScrollMoved(int value)
@@ -169,7 +176,7 @@ void AP2DataPlot2D::verticalScrollMoved(int value)
 {
     double percent = value / 100.0;
     double center = m_wideAxisRect->axis(QCPAxis::atBottom)->range().center();
-    double requestedrange = ((m_scrollEndIndex - (m_timeDiff / 1000.0)) - m_scrollStartIndex) * percent;
+    double requestedrange = ((m_scrollEndIndex) - m_scrollStartIndex) * percent;
     m_wideAxisRect->axis(QCPAxis::atBottom)->setRangeUpper(center + (requestedrange/2.0));
     m_wideAxisRect->axis(QCPAxis::atBottom)->setRangeLower(center - (requestedrange/2.0));
     m_plot->replot();
@@ -436,7 +443,7 @@ void AP2DataPlot2D::autoScrollClicked(bool checked)
     {
         if (m_graphCount > 0)
         {
-            double msec_current = ((QDateTime::currentMSecsSinceEpoch()- m_startIndex) + m_timeDiff) / 1000.0;
+            double msec_current = ((QDateTime::currentMSecsSinceEpoch()- m_startIndex)) / 1000.0;
             double difference = m_wideAxisRect->axis(QCPAxis::atBottom,0)->range().upper - m_wideAxisRect->axis(QCPAxis::atBottom,0)->range().lower;
             m_wideAxisRect->axis(QCPAxis::atBottom,0)->setRangeLower(msec_current - difference);
             m_wideAxisRect->axis(QCPAxis::atBottom,0)->setRangeUpper(msec_current);
@@ -461,7 +468,7 @@ void AP2DataPlot2D::activeUASSet(UASInterface* uas)
     m_startIndex = m_currentIndex;
     m_scrollStartIndex = 0;
     ui.horizontalScrollBar->blockSignals(true);
-    ui.horizontalScrollBar->setMinimum(m_scrollStartIndex + m_timeDiff);
+    ui.horizontalScrollBar->setMinimum(m_scrollStartIndex);
     ui.horizontalScrollBar->blockSignals(false);
     m_uas = uas;
 
@@ -486,7 +493,7 @@ void AP2DataPlot2D::disconnected()
 
 void AP2DataPlot2D::addSource(MAVLinkDecoder *decoder)
 {
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
+    //connect(decoder,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
 }
 void AP2DataPlot2D::navModeChanged(int uasid, int mode, const QString& text)
 {
@@ -502,7 +509,7 @@ void AP2DataPlot2D::navModeChanged(int uasid, int mode, const QString& text)
     }
     qint64 msec_current = QDateTime::currentMSecsSinceEpoch();
     m_currentIndex = msec_current;
-    qint64 newmsec = (msec_current - m_startIndex) + m_timeDiff;
+    qint64 newmsec = (msec_current - m_startIndex);// + m_timeDiff;
     if (m_graphCount > 0 && ui.autoScrollCheckBox->isChecked())
     {
         double diff = (newmsec / 1000.0) - m_wideAxisRect->axis(QCPAxis::atBottom,0)->range().upper;
@@ -584,7 +591,7 @@ void AP2DataPlot2D::updateValue(const int uasId, const QString& name, const QStr
 
     qint64 msec_current = QDateTime::currentMSecsSinceEpoch();
     m_currentIndex = msec_current;
-    qint64 newmsec = (msec_current - m_startIndex) + m_timeDiff;
+    qint64 newmsec = (msec_current - m_startIndex);// + m_timeDiff;
     if (m_graphCount > 0 && ui.autoScrollCheckBox->isChecked())
     {
         double diff = (newmsec / 1000.0) - m_wideAxisRect->axis(QCPAxis::atBottom,0)->range().upper;
@@ -602,7 +609,7 @@ void AP2DataPlot2D::updateValue(const int uasId, const QString& name, const QStr
         //Set a timeout for 30 minutes from now, 1800 seconds.
         qint64 current = QDateTime::currentMSecsSinceEpoch();
         //This is 30 minutes
-        m_onlineValueTimeoutList.append(QPair<qint64,double>(current + m_timeDiff,msec));
+        m_onlineValueTimeoutList.append(QPair<qint64,double>(current,msec));
         //This is 1 minute
         //m_onlineValueTimeoutList.append(QPair<qint64,double>(current + 60000,m_currentIndex));
         if (m_onlineValueTimeoutList[0].first <= current)
@@ -670,7 +677,7 @@ void AP2DataPlot2D::loadButtonClicked()
     QString filename = "";
     if (!m_logLoaded)
     {
-        filename = QFileDialog::getOpenFileName(this,"Select log file to open",QGC::logDirectory());
+        filename = QFileDialog::getOpenFileName(this,"Select log file to open",QGC::logDirectory(),"Dataflash Log Files (*.log *.bin);;All Files (*.*)");
         if (filename == "")
         {
             return;
@@ -704,7 +711,7 @@ void AP2DataPlot2D::loadButtonClicked()
         ui.logTypeLabel->setText("<p align=\"center\"><span style=\" font-size:24pt; color:#0000ff;\">Live Data</span></p>");
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setTickLabelType(QCPAxis::ltDateTime);
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setDateTimeFormat("hh:mm:ss");
-        m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(m_timeDiff / 1000,(m_timeDiff / 1000) + 100); //Default range of 0-100 milliseconds?
+        m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100); //Default range of 0-100 milliseconds?
         m_currentIndex = QDateTime::currentMSecsSinceEpoch();
         m_startIndex = m_currentIndex;
         return;
@@ -732,7 +739,7 @@ void AP2DataPlot2D::loadButtonClicked()
     connect(m_logLoaderThread,SIGNAL(startLoad()),this,SLOT(loadStarted()));
     connect(m_logLoaderThread,SIGNAL(loadProgress(qint64,qint64)),this,SLOT(loadProgress(qint64,qint64)));
     connect(m_logLoaderThread,SIGNAL(error(QString)),this,SLOT(threadError(QString)));
-    connect(m_logLoaderThread,SIGNAL(done(int)),this,SLOT(threadDone(int)));
+    connect(m_logLoaderThread,SIGNAL(done(int,MAV_TYPE)),this,SLOT(threadDone(int,MAV_TYPE)));
     connect(m_logLoaderThread,SIGNAL(terminated()),this,SLOT(threadTerminated()));
     connect(m_logLoaderThread,SIGNAL(payloadDecoded(int,QString,QVariantMap)),this,SLOT(payloadDecoded(int,QString,QVariantMap)));
     connect(m_logLoaderThread,SIGNAL(lineRead(QString)),this,SLOT(logLine(QString)));
@@ -1043,6 +1050,7 @@ void AP2DataPlot2D::graphRemovedFromGroup(QString name)
     QString group = m_graphClassMap.value(name).groupName;
     m_graphGrouping[group].removeOne(name);
     m_graphClassMap[name].isInGroup = false;
+    m_graphClassMap[name].groupName = "";
     //m_graphClassMap.value(name).graph->valueAxis()->setRange;
     m_graphClassMap.value(name).graph->rescaleValueAxis();
     if (m_axisGroupingDialog)
@@ -1118,7 +1126,7 @@ void AP2DataPlot2D::loadProgress(qint64 pos,qint64 size)
     m_progressDialog->setValue(((double)pos / (double)size) * 100.0);
 }
 
-void AP2DataPlot2D::threadDone(int errors)
+void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
 {
     if (!m_sharedDb.isOpen())
     {
@@ -1166,6 +1174,100 @@ void AP2DataPlot2D::threadDone(int errors)
         QString lastformat = vars;
         m_tableHeaderNameMap[linename] = lastformat.trimmed();
     }
+
+    QSqlQuery modequery(m_sharedDb);
+    modequery.prepare("SELECT * FROM 'MODE';");
+    if (!modequery.exec())
+    {
+        //No mode?
+        QLOG_DEBUG() << "Graph loaded with no mode table. Running anyway, but text modes will not be available";
+    }
+    else
+    {
+        if (!m_graphClassMap.contains("MODE"))
+        {
+            QCPAxis *axis = m_wideAxisRect->addAxis(QCPAxis::atLeft);
+            axis->setLabel("MODE");
+
+            if (m_graphCount > 0)
+            {
+                connect(m_wideAxisRect->axis(QCPAxis::atLeft,0),SIGNAL(rangeChanged(QCPRange)),axis,SLOT(setRange(QCPRange)));
+            }
+            QColor color = QColor::fromRgb(rand()%255,rand()%255,rand()%255);
+            axis->setLabelColor(color);
+            axis->setTickLabelColor(color);
+            axis->setTickLabelColor(color); // add an extra axis on the left and color its numbers
+            QCPGraph *mainGraph1 = m_plot->addGraph(m_wideAxisRect->axis(QCPAxis::atBottom), m_wideAxisRect->axis(QCPAxis::atLeft,m_graphCount++));
+            m_graphNameList.append("MODE");
+
+            mainGraph1->setPen(QPen(color, 2));
+            Graph graph;
+            graph.axis = axis;
+            graph.groupName = "";
+            graph.graph=  mainGraph1;
+            graph.isInGroup = false;
+            graph.isManualRange = false;
+            m_graphClassMap["MODE"] = graph;
+
+            mainGraph1->rescaleValueAxis();
+            if (m_graphCount == 1)
+            {
+                mainGraph1->rescaleKeyAxis();
+            }
+        }
+        while (modequery.next())
+        {
+            QSqlRecord record = modequery.record();
+            int index = record.value(0).toInt();
+            QString mode = record.value(1).toString();
+            bool ok = false;
+            int modeint = mode.toInt(&ok);
+            if (ok)
+            {
+                //It's an integer!
+                switch (type)
+                {
+                    case MAV_TYPE_QUADROTOR:
+                    {
+                        mode = ApmCopter::stringForMode(modeint);
+                    }
+                    break;
+                    case MAV_TYPE_FIXED_WING:
+                    {
+                        mode = ApmPlane::stringForMode(modeint);
+                    }
+                    break;
+                    case MAV_TYPE_GROUND_ROVER:
+                    {
+                        mode = ApmRover::stringForMode(modeint);
+                    }
+                    break;
+                }
+            }
+            QLOG_DEBUG() << "Mode change at index" << index << "to" << mode;
+            QCPAxis *xAxis = m_wideAxisRect->axis(QCPAxis::atBottom);
+            QCPItemText *itemtext = new QCPItemText(m_plot);
+            itemtext->setText(mode);
+            itemtext->position->setAxes(xAxis,m_graphClassMap["MODE"].axis);
+            itemtext->position->setCoords((index),2.0);
+            m_plot->addItem(itemtext);
+            m_graphClassMap["MODE"].itemList.append(itemtext);
+            m_graphClassMap["MODE"].modeMap[index] = mode;
+
+
+            QCPItemLine *itemline = new QCPItemLine(m_plot);
+            m_graphClassMap["MODE"].itemList.append(itemline);
+            itemline->start->setParentAnchor(itemtext->bottom);
+            itemline->start->setAxes(xAxis, m_graphClassMap["MODE"].axis);
+            itemline->start->setCoords(0.0, 0.0);
+            itemline->end->setAxes(xAxis, m_graphClassMap["MODE"].axis);
+            itemline->end->setCoords((index), 0.0);
+            itemline->setTail(QCPLineEnding::esDisc);
+            itemline->setHead(QCPLineEnding::esSpikeArrow);
+            m_plot->addItem(itemline);
+        }
+    }
+
     m_scrollStartIndex = 0;
     m_scrollEndIndex = currentIndex;
     ui.horizontalScrollBar->setMinimum(m_scrollStartIndex);

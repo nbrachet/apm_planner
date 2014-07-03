@@ -11,10 +11,11 @@
 #include "QsLog.h"
 #include "QGC.h"
 
+
 AP2DataPlotThread::AP2DataPlotThread(QObject *parent) :
     QThread(parent)
 {
-
+    qRegisterMetaType<MAV_TYPE>("MAV_TYPE");
 }
 void AP2DataPlotThread::loadFile(QString file,QSqlDatabase *db)
 {
@@ -29,6 +30,7 @@ QString AP2DataPlotThread::makeCreateTableString(QString tablename, QString form
     for (int j=0;j<varchar.size();j++)
     {
         QString name = varchar[j].trimmed();
+        name = "\"" + name + "\"";
         QChar typeCode = formatstr.at(j);
         if (typeCode == 'b') //int8_t
         {
@@ -107,7 +109,7 @@ QString AP2DataPlotThread::makeInsertTableString(QString tablename, QString vari
     for (int j=0;j<linesplit.size();j++)
     {
         QString name = linesplit[j].trimmed();
-        inserttable.append("," + name);
+        inserttable.append(",\"" + name + "\"");
         insertvalues.append(",?");
     }
     inserttable.append(")");
@@ -145,11 +147,13 @@ void AP2DataPlotThread::run()
         emit error("Unable to open log file");
         return;
     }
+    MAV_TYPE loadedtype = MAV_TYPE_GENERIC;
     QByteArray block;
     QMap<unsigned char,unsigned char> typeToLengthMap;
     QMap<unsigned char,QString > typeToNameMap;
     QMap<unsigned char,QString > typeToFormatMap;
     QMap<unsigned char,QString > typeToLabelMap;
+    QStringList tables;
     int index = 0;
 
     if (!m_db->transaction())
@@ -183,6 +187,7 @@ void AP2DataPlotThread::run()
         emit error("Unable to start database transaction 2");
         return;
     }
+    int paramtype = -1;
     if (type == 1)
     {
         bool firstactual = true;
@@ -217,6 +222,10 @@ void AP2DataPlotThread::run()
                             QString name = packet.mid(2,4); //Name of the message
                             QString format = packet.mid(6,16); //Format of the variables
                             QString labels = packet.mid(22,64); //comma delimited list of variable names.
+                            if (name == "PARM")
+                            {
+                                paramtype = msg_type;
+                            }
                             typeToFormatMap[msg_type] = format;
                             typeToLabelMap[msg_type] = labels;
                             typeToLengthMap[msg_type] = msg_length;
@@ -232,12 +241,15 @@ void AP2DataPlotThread::run()
                                 QLOG_DEBUG() << "AP2DataPlotThread::run(): empty format string or labels string for type" << msg_type << name;
                                 continue;
                             }
-                            QSqlQuery mktablequery(*m_db);
-                            mktablequery.prepare(makeCreateTableString(name,format,labels));
-                            if (!mktablequery.exec())
-                            {
-                                emit error("Error creating table for: " + name + " : " + m_db->lastError().text());
-                                return;
+                            if (!tables.contains(name)) {
+                                QSqlQuery mktablequery(*m_db);
+                                mktablequery.prepare(makeCreateTableString(name,format,labels));
+                                if (!mktablequery.exec())
+                                {
+                                    emit error("Error creating table for: " + name + " : " + m_db->lastError().text());
+                                    return;
+                                }
+                                tables.append(name);
                             }
                             QSqlQuery *query = new QSqlQuery(*m_db);
                             QString final = makeInsertTableString(name,labels);
@@ -452,6 +464,21 @@ void AP2DataPlotThread::run()
                                         QLOG_DEBUG() << "AP2DataPlotThread::run(): ERROR UNKNOWN DATA TYPE" << typeCode;
                                     }
                                 }
+                                if (type == paramtype && loadedtype == MAV_TYPE_GENERIC)
+                                {
+                                    if (linetoemit.contains("RATE_RLL_P") || linetoemit.contains("H_SWASH_PLATE"))
+                                    {
+                                        loadedtype = MAV_TYPE_QUADROTOR;
+                                    }
+                                    if (linetoemit.contains("PTCH2SRV_P"))
+                                    {
+                                        loadedtype = MAV_TYPE_FIXED_WING;
+                                    }
+                                    if (linetoemit.contains("SKID_STEER_OUT"))
+                                    {
+                                        loadedtype = MAV_TYPE_GROUND_ROVER;
+                                    }
+                                }
                                 emit lineRead(linetoemit);
 
                                 if (!nameToInsertQuery[name]->exec())
@@ -488,6 +515,21 @@ void AP2DataPlotThread::run()
             emit loadProgress(logfile.pos(),logfile.size());
             QString line = logfile.readLine();
             emit lineRead(line);
+            if (loadedtype == MAV_TYPE_GENERIC)
+            {
+                if (line.contains("ArduCopter" || (line.contains("PARM") && (line.contains("RATE_RLL_P") || line.contains("H_SWASH_PLATE")))))
+                {
+                    loadedtype = MAV_TYPE_QUADROTOR;
+                }
+                if (line.contains("ArduPlane") || (line.contains("PARM") && line.contains("PTCH2SRV_P")))
+                {
+                    loadedtype = MAV_TYPE_FIXED_WING;
+                }
+                if (line.contains("ArduRover") || (line.contains("PARM") && line.contains("SKID_STEER_OUT")))
+                {
+                    loadedtype = MAV_TYPE_GROUND_ROVER;
+                }
+            }
             QStringList linesplit = line.replace("\r","").replace("\n","").split(",");
             if (linesplit.size() > 0)
             {
@@ -660,6 +702,6 @@ void AP2DataPlotThread::run()
     else
     {
         QLOG_INFO() << "Plot Log loading took" << (QDateTime::currentMSecsSinceEpoch() - msecs) / 1000.0 << "seconds";
-        emit done(errorcount);
+        emit done(errorcount,loadedtype);
     }
 }

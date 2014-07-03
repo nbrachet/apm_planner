@@ -53,7 +53,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, int id = 0);
+    UAS(MAVLinkProtocol* protocol,int id = 0);
     ~UAS();
 
     static const float lipoFull;  ///< 100% charged voltage
@@ -93,6 +93,7 @@ public:
     float filterVoltage(float value) const;
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
+    QList<int> getLinkIdList();
 
     Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
     Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)
@@ -408,12 +409,13 @@ public:
     friend class UASWaypointManager;
 
 protected: //COMMENTS FOR TEST UNIT
+    bool m_heartbeatsEnabled;
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
     QMap<int, QString> components;///< IDs and names of all detected onboard components
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
-    MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
+    //MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     CommStatus commStatus;        ///< Communication status
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
@@ -570,6 +572,7 @@ protected: //COMMENTS FOR TEST UNIT
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
 
 public:
+    void setHeartbeatEnabled(bool enabled) { m_heartbeatsEnabled = enabled; }
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
     /** @brief Estimate how much flight time is remaining */
@@ -773,6 +776,12 @@ public:
     bool isHelicopter();
 
 public slots:
+
+    void protocolStatusMessageRec(const QString& title, const QString& message);
+    void valueChangedRec(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+    void textMessageReceivedRec(int uasid, int componentid, int severity, const QString& text);
+    void receiveLossChangedRec(int id,float value);
+
     /** @brief Set the autopilot type */
     void setAutopilotType(int apType)
     {
@@ -988,6 +997,7 @@ public slots:
     void startMagnetometerCalibration();
     void startGyroscopeCalibration();
     void startPressureCalibration();
+    void startCompassMotCalibration();
 
     void startDataRecording();
     void stopDataRecording();
@@ -998,6 +1008,8 @@ public slots:
     void logRequestData(uint16_t id, uint32_t ofs, uint32_t count);
     void logEraseAll();
     void logRequestEnd();
+
+    void sendHeartbeat();
 
 signals:
     /** @brief The main/battery voltage has changed/was updated */

@@ -1,3 +1,31 @@
+/*===================================================================
+APM_PLANNER Open Source Ground Control Station
+
+(c) 2014 APM_PLANNER PROJECT <http://www.ardupilot.com>
+
+This file is part of the APM_PLANNER project
+
+    APM_PLANNER is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    APM_PLANNER is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with APM_PLANNER. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+/**
+ * @file
+ *   @brief Droneshare API Query Object
+ *
+ *   @author Bill Bonney <billbonney@communistech.com>
+ */
+
 #include "QsLog.h"
 #include "AutoUpdateCheck.h"
 #include <QtScript/QScriptEngine>
@@ -13,7 +41,8 @@
 AutoUpdateCheck::AutoUpdateCheck(QObject *parent) :
     QObject(parent),
     m_networkReply(NULL),
-    m_httpRequestAborted(false)
+    m_httpRequestAborted(false),
+    m_suppressNoUpdateSignal(false)
 {
     loadSettings();
 }
@@ -106,16 +135,23 @@ void AutoUpdateCheck::processDownloadedVersionObject(const QString &versionObjec
         QString name = entry.property("name").toString();
         QString locationUrl = entry.property("url").toString();
 
-        if ((platform == define2string(APP_PLATFORM)) && (type == define2string(APP_TYPE))
-            && (compareVersionStrings(version,QGC_APPLICATION_VERSION))){
-            QLOG_DEBUG() << "Found New Version: " << platform << " "
-                        << type << " " << version << " " << locationUrl;
-            if(m_skipVerison != version){
-                emit updateAvailable(version, type, locationUrl, name);
+        if ((platform == define2string(APP_PLATFORM)) && (type == define2string(APP_TYPE))){
+            if (compareVersionStrings(version,QGC_APPLICATION_VERSION)){
+                QLOG_DEBUG() << "Found New Version: " << platform << " "
+                            << type << " " << version << " " << locationUrl;
+                if(m_skipVerison != version){
+                    emit updateAvailable(version, type, locationUrl, name);
+                } else {
+                    QLOG_INFO() << "Version Skipped at user request";
+                }
+                break;
             } else {
-                QLOG_DEBUG() << "Version Skipped at user request";
+                QLOG_INFO() << "no new update available";
+                if (!m_suppressNoUpdateSignal){
+                    emit noUpdateAvailable();
+                }
+                m_suppressNoUpdateSignal = false;
             }
-            break;
         }
     }
 }
@@ -268,4 +304,9 @@ void AutoUpdateCheck::writeSettings()
     settings.setValue("RELEASE_TYPE", m_releaseType);
     settings.endGroup();
     settings.sync();
+}
+
+void AutoUpdateCheck::suppressNoUpdateSignal()
+{
+    m_suppressNoUpdateSignal = true;
 }

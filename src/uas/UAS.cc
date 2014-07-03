@@ -15,10 +15,11 @@
 #include "UASManager.h"
 #include "QGC.h"
 #include "GAudioOutput.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
 #include "SerialLink.h"
+#include "MainWindow.h"
 
 #include <QList>
 #include <QMessageBox>
@@ -49,7 +50,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     uasId(id),
     links(new QList<LinkInterface*>()),
     unknownPackets(),
-    mavlink(protocol),
     commStatus(COMM_DISCONNECTED),
     receiveDropRate(0),
     sendDropRate(0),
@@ -182,16 +182,14 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     // Initial signals
     emit disarmed();
     emit armingChanged(false);  
-    if (mavlink)
-    {
-        systemId = mavlink->getSystemId();
-        componentId = mavlink->getComponentId();
-    }
-    else
-    {
-        systemId = QGC::defaultSystemId;
-        componentId = QGC::defaultComponentId;
-    }
+
+    systemId = QGC::defaultSystemId;
+    componentId = QGC::defaultComponentId;
+
+    m_heartbeatsEnabled = MainWindow::instance()->heartbeatEnabled(); //Default to sending heartbeats
+    QTimer *heartbeattimer = new QTimer(this);
+    connect(heartbeattimer,SIGNAL(timeout()),this,SLOT(sendHeartbeat()));
+    heartbeattimer->start(MAVLINK_HEARTBEAT_DEFAULT_RATE * 1000);
 }
 
 /**
@@ -1352,6 +1350,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit logData(uasId, log_data.ofs, log_data.id, log_data.count, (const char*)log_data.data);
         }
             break;
+        case MAVLINK_MSG_ID_COMPASSMOT_STATUS:
+        {
+            // Configuration Messages for Compass Calibration
+            mavlink_compassmot_status_t compassmot_status;
+            mavlink_msg_compassmot_status_decode(&message, &compassmot_status);
+            emit compassMotCalibration(&compassmot_status);
+        }
+            break;
         // Messages to ignore
         case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_RAW_PRESSURE:
@@ -1380,6 +1386,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         }
     }
+    emit mavlinkMessageRecieved(link,message);
 }
 
 
@@ -1650,6 +1657,14 @@ void UAS::startPressureCalibration()
     sendMessage(msg);
 }
 
+void UAS::startCompassMotCalibration()
+{
+    mavlink_message_t msg;
+    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio, Param5: Accel Calib Param 6: Compass Mot
+    mavlink_msg_command_long_pack(systemId, componentId, &msg, uasId, 0, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 0, 0, 1, 0);
+    sendMessage(msg);
+}
+
 /**
 * Check if time is smaller than 40 years, assuming no system without Unix
 * timestamp runs longer than 40 years continuously without reboot. In worst case
@@ -1888,16 +1903,16 @@ void UAS::sendMessage(mavlink_message_t message)
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, *links)
     {
-        if (LinkManager::instance()->getLinks().contains(link))
-        {
+        //if (LinkManager::instance()->getLinks().contains(link))
+        //{
             if (link->isConnected())
                 sendMessage(link, message);
-        }
-        else
-        {
-            // Remove from list
-            links->removeAt(links->indexOf(link));
-        }
+        //}
+        //else
+        //{
+        //    // Remove from list
+        //    links->removeAt(links->indexOf(link));
+        //}
     }
 }
 
@@ -1908,7 +1923,7 @@ void UAS::sendMessage(mavlink_message_t message)
 void UAS::forwardMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
-    QList<LinkInterface*>link_list = LinkManager::instance()->getLinksForProtocol(mavlink);
+    /*QList<LinkInterface*>link_list = LinkManager::instance()->getLinksForProtocol(mavlink);
 
     foreach(LinkInterface* link, link_list)
     {
@@ -1929,8 +1944,21 @@ void UAS::forwardMessage(mavlink_message_t message)
                 }
             }
         }
+    }*/
+}
+
+
+void UAS::sendHeartbeat()
+{
+    if (m_heartbeatsEnabled)
+    {
+        mavlink_message_t beat;
+        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL_ARMED, 0, MAV_STATE_ACTIVE);
+        sendMessage(beat);
     }
 }
+
+
 
 /**
 * Send a message to the link that is connected.
@@ -2431,7 +2459,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
             switch (value.type())
             {
             case QVariant::Char:
-                union_value.param_float = (unsigned char)value.toChar().toAscii();
+                union_value.param_float = static_cast<char>(value.toChar().toAscii());
                 p.param_type = MAV_PARAM_TYPE_INT8;
                 break;
             case QVariant::Int:
@@ -2457,7 +2485,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
             switch (value.type())
             {
             case QVariant::Char:
-                union_value.param_int8 = (unsigned char)value.toChar().toAscii();
+                union_value.param_int8 = static_cast<unsigned char>(value.toChar().toAscii());
                 p.param_type = MAV_PARAM_TYPE_INT8;
                 break;
             case QVariant::Int:
@@ -3507,6 +3535,16 @@ QList<LinkInterface*>* UAS::getLinks()
     return links;
 }
 
+QList<int> UAS::getLinkIdList()
+{
+    QList<int> linklist;
+    for (int i=0;i<links->size();i++)
+    {
+        linklist.append(links->at(i)->getId());
+    }
+    return linklist;
+}
+
 /**
 * @rerturn the map of the components
 */
@@ -3745,4 +3783,22 @@ void UAS::playArmStateChangedAudioMessage(bool armedState)
         GAudioOutput::instance()->say("disarmed");
     }
 }
+void UAS::protocolStatusMessageRec(const QString& title, const QString& message)
+{
+    emit protocolStatusMessage(title,message);
+}
 
+void UAS::valueChangedRec(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec)
+{
+    emit valueChanged(uasId,name,unit,value,msec);
+}
+
+void UAS::textMessageReceivedRec(int uasid, int componentid, int severity, const QString& text)
+{
+    emit textMessageReceived(uasid,componentid,severity,text);
+}
+
+void UAS::receiveLossChangedRec(int id,float value)
+{
+    emit receiveLossChanged(id,value);
+}

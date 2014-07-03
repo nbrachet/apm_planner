@@ -101,6 +101,8 @@ public:
 
     /* MANAGEMENT */
 
+    virtual void setHeartbeatEnabled(bool enabled)=0;
+
     /** @brief The name of the robot **/
     virtual QString getUASName() const = 0;
     /** @brief Get short state */
@@ -213,6 +215,7 @@ public:
          *         interface. The LinkInterface can support multiple protocols.
          **/
     virtual QList<LinkInterface*>* getLinks() = 0;
+    virtual QList<int> getLinkIdList() = 0;
 
     /**
      * @brief Get the color for this UAS
@@ -286,6 +289,16 @@ public:
     }
 
 public slots:
+
+    /**
+     * @brief Slots for connecting the mavlink decoder to
+     * @param title
+     * @param message
+     */
+    virtual void protocolStatusMessageRec(const QString& title, const QString& message)=0;
+    virtual void valueChangedRec(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec)=0;
+    virtual void textMessageReceivedRec(int uasid, int componentid, int severity, const QString& text)=0;
+    virtual void receiveLossChangedRec(int id,float value)=0;
 
     /** @brief Set a new name for the system */
     virtual void setUASName(const QString& name) = 0;
@@ -397,6 +410,7 @@ public slots:
     virtual void startMagnetometerCalibration() = 0;
     virtual void startGyroscopeCalibration() = 0;
     virtual void startPressureCalibration() = 0;
+    virtual void startCompassMotCalibration() = 0;
 
  	// [NOTE] isRotary/isFixedWing defined above.
     /** @brief Set the current battery type and voltages */
@@ -676,10 +690,19 @@ signals:
     void sensorOffsetsMessageUpdate(UASInterface *uas, mavlink_sensor_offsets_t sensorOffsets);
     /** @brief Radio Status update message*/
     void radioMessageUpdate(UASInterface *uas, mavlink_radio_t radioMessage);
+    /** @brief Compass Mot Status update message*/
+    void compassMotCalibration(mavlink_compassmot_status_t* compassmot_status);
 
     // Log Download Signals
     void logEntry(int uasId, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
     void logData(uint32_t uasId, uint32_t ofs, uint16_t id, uint8_t count, const char* data);
+
+    void protocolStatusMessage(const QString& title, const QString& message);
+    //void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+    //void textMessageReceived(int uasid, int componentid, int severity, const QString& text);
+    void receiveLossChanged(int id,float value);
+
+    void mavlinkMessageRecieved(LinkInterface *link,mavlink_message_t message);
 
 protected:
 

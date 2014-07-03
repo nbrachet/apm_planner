@@ -20,14 +20,14 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     ui->setupUi(this);
 
     // Add all protocols
-    QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();
+    /*QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();
     foreach (ProtocolInterface* protocol, protocols) {
         MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
         if (mavlink) {
             MAVLinkSettingsWidget* msettings = new MAVLinkSettingsWidget(mavlink, this);
             ui->tabWidget->addTab(msettings, "MAVLink");
         }
-    }
+    }*/
 
     this->window()->setWindowTitle(tr("APM Planner 2 Settings"));
 
@@ -55,6 +55,9 @@ void QGCSettingsWidget::showEvent(QShowEvent *evt)
         //Dock widget title bars
         ui->titleBarCheckBox->setChecked(MainWindow::instance()->dockWidgetTitleBarsEnabled());
         connect(ui->titleBarCheckBox,SIGNAL(clicked(bool)),MainWindow::instance(),SLOT(enableDockWidgetTitleBars(bool)));
+
+        ui->heartbeatCheckBox->setChecked(MainWindow::instance()->heartbeatEnabled());
+        connect(ui->heartbeatCheckBox,SIGNAL(clicked(bool)),MainWindow::instance(),SLOT(enableHeartbeat(bool)));
 
         ui->logDirEdit->setText(QGC::logDirectory());
 
