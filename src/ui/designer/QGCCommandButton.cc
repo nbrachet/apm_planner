@@ -146,13 +146,13 @@ void QGCCommandButton::sendCommand()
                     emit showLabel(showlabelname,index);
                 }
                 QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, param5, param6, param7, component);
-                //QLOG_DEBUG() << __FILE__ << __LINE__ << "SENDING COMMAND" << index;
+                //QLOG_DEBUG() << "SENDING COMMAND" << index;
             }
         }
     }
     else
     {
-        QLOG_DEBUG() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
+        QLOG_DEBUG() << "NO UAS SET, DOING NOTHING";
     }
 }
 

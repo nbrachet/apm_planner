@@ -223,7 +223,7 @@ void QGCJSBSimLink::readBytes()
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
     socket->readDatagram(data, maxLength, &sender, &senderPort);
 
-    QByteArray b(data, s);
+//    QByteArray b(data, s);
 
     // Print string
 //    QString state(b);
@@ -242,13 +242,13 @@ void QGCJSBSimLink::readBytes()
 
 
         // Echo data for debugging purposes
-        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
-        for (unsigned int i=0; i<s; i++)
-        {
-            unsigned int v=data[i];
-            fprintf(stderr,"%02x ", v);
-        }
-        std::cerr << std::endl;
+//        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
+//        for (unsigned int i=0; i<s; i++)
+//        {
+//            unsigned int v=data[i];
+//            fprintf(stderr,"%02x ", v);
+//        }
+//        std::cerr << std::endl;
 }
 
 

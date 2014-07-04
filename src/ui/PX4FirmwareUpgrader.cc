@@ -34,7 +34,7 @@ void PX4FirmwareUpgrader::selectFirmwareFile()
                        path,
                        tr("PX4 Firmware (*%1);;").arg(widgetFileExtension));
     settings.setValue("PX4_FIRMWARE_PATH", fileName);
-    qDebug() << "EMITTING SIGNAL";
+    QLOG_DEBUG() << "EMITTING SIGNAL";
     emit firmwareFileNameSet(fileName);
 }
 
@@ -46,7 +46,7 @@ void PX4FirmwareUpgrader::setDetectionStatusText(const QString &text)
 void PX4FirmwareUpgrader::setFlashStatusText(const QString &text)
 {
     ui->flashProgressLabel->setText(text);
-    qDebug() << __FILE__ << __LINE__ << "LABEL" << text;
+    QLOG_DEBUG()<< "LABEL" << text;
 }
 
 void PX4FirmwareUpgrader::setFlashProgress(int percent)
