@@ -412,7 +412,8 @@ FORMS += \
     src/uas/LogDownloadDialog.ui \
     src/ui/PrimaryFlightDisplayQML.ui \
     src/ui/configuration/CompassMotorCalibrationDialog.ui \
-    src/ui/MissionElevationDisplay.ui
+    src/ui/MissionElevationDisplay.ui \
+    src/ui/DroneshareUploadDialog.ui
 
 HEADERS += \
     src/MG.h \
@@ -635,7 +636,11 @@ HEADERS += \
     src/comm/MAVLinkDecoder.h \
     src/comm/MAVLinkProtocol.h \
     src/ui/MissionElevationDisplay.h \
-    src/ui/GoogleElevationData.h
+    src/ui/GoogleElevationData.h \
+    src/ui/DroneshareUploadDialog.h \
+    src/ui/DroneshareUpload.h \
+    src/ui/LoginDialog.h \
+    src/ui/DroneshareAPIBroker.h
 #    libs/sik_uploader/qsikuploader.h \
 #    libs/sik_uploader/sikuploader.h \
 
@@ -852,7 +857,11 @@ SOURCES += src/main.cc \
     src/comm/MAVLinkDecoder.cc \
     src/comm/MAVLinkProtocol.cc \
     src/ui/MissionElevationDisplay.cpp \
-    src/ui/GoogleElevationData.cpp
+    src/ui/GoogleElevationData.cpp \
+    src/ui/DroneshareUploadDialog.cpp \
+    src/ui/DroneshareUpload.cpp \
+    src/ui/LoginDialog.cpp \
+    src/ui/DroneshareAPIBroker.cpp
 #    libs/sik_uploader/qsikuploader.cpp \
 #    libs/sik_uploader/sikuploader.cpp \
 

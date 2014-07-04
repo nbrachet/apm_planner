@@ -10,6 +10,7 @@
 #include "UASInterface.h"
 #include "MAVLinkDecoder.h"
 #include "AP2DataPlotAxisDialog.h"
+#include "DroneshareUploadDialog.h"
 #include <QTextBrowser>
 #include <QSqlDatabase>
 #include <QStandardItemModel>
@@ -31,6 +32,7 @@ signals:
 public slots:
     void showLogDownloadDialog();
     void closeLogDownloadDialog();
+    void clearGraph();
 
 private slots:
     //New Active UAS set
@@ -89,6 +91,8 @@ private slots:
     void verticalScrollMoved(int value);
     void xAxisChanged(QCPRange range);
     void replyTLogButtonClicked();
+
+    void droneshareButtonClicked();
 
 private:
     void showEvent(QShowEvent *evt);
@@ -153,6 +157,7 @@ private:
     qint64 m_scrollEndIndex; //Actual graph end
 
     LogDownloadDialog *m_logDownloadDialog;
+    DroneshareUploadDialog *m_droneshareUploadDialog;
 
 
 };
