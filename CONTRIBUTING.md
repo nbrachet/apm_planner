@@ -1,4 +1,4 @@
-# Contributing to Droneshare
+# Contributing to APM Planner 2.0
 We **<3 pull requests**, this is a short guide on how to write a succesful pull request for this project.
 
 ### Fork the project, then clone the repo
@@ -23,12 +23,18 @@ and make sure you use a descriptive branch name
 
 ### Commit your changes
 
-Always write descriptive commit messages and add a fixes or relates note to them with an issue number
+Always write descriptive commit messages and add a fixes or relates note to them with an issue number. The format is
+```
+<SUBSYSTEM>: <SHORT_DESCRIPTON> 
+
+<LINE LONG_DESCRITPION>
+```
+APM Planner 2.0 Git Subsystems Names - https://docs.google.com/spreadsheets/d/1pvwlyny6EMIYt-viCxiLug-BUYC-jSYIWxciZIntUew/edit?usp=sharing
 
 **Example:**
 
 ```
-Mission Wdit Widget: Add support for new command ROI
+Mission Edit Widget: Add support for new command ROI
 
 Added support for multiple ROIs in missions edit widget
 and removed the unessecary mission lines
