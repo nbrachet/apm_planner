@@ -49,6 +49,7 @@ AutoUpdateCheck::AutoUpdateCheck(QObject *parent) :
 
 void AutoUpdateCheck::forcedAutoUpdateCheck()
 {
+    loadSettings();
     setSkipVersion("0.0.0");
     autoUpdateCheck();
 }
@@ -135,7 +136,7 @@ void AutoUpdateCheck::processDownloadedVersionObject(const QString &versionObjec
         QString name = entry.property("name").toString();
         QString locationUrl = entry.property("url").toString();
 
-        if ((platform == define2string(APP_PLATFORM)) && (type == define2string(APP_TYPE))){
+        if ((platform == define2string(APP_PLATFORM)) && (type == m_releaseType)){
             if (compareVersionStrings(version,QGC_APPLICATION_VERSION)){
                 QLOG_DEBUG() << "Found New Version: " << platform << " "
                             << type << " " << version << " " << locationUrl;
@@ -244,8 +245,8 @@ bool AutoUpdateCheck::compareVersionStrings(const QString& newVersion, const QSt
                     QRegExp releaseNumber2("\\d+");
                     pos = releaseNumber2.indexIn(oldBuildSubMoniker);
                     if (pos > -1) {
-                        QLOG_DEBUG() << "Detected oldRc:" << versionEx.capturedTexts();
-                        oldRc = releaseNumber.cap(0).toInt();
+                        QLOG_DEBUG() << "Detected oldRc:" << versionEx2.capturedTexts();
+                        oldRc = releaseNumber2.cap(0).toInt();
                     }
 
                     if (newRc > oldRc)
