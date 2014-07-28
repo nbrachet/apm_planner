@@ -98,23 +98,29 @@ public:
     QList<QString> getCurrentPorts();
     void stopLogging();
     void startLogging();
+    void setLogSubDirectory(QString dir);
+    bool loggingEnabled();
 private:
     QMap<int,LinkInterface*> m_connectionMap;
     QMap<int,UASInterface*> m_uasMap;
     MAVLinkDecoder *m_mavlinkDecoder;
     MAVLinkProtocol *m_mavlinkParser;
+    QString m_logSubDir;
+    bool m_mavlinkLoggingEnabled;
 signals:
     //void newLink(LinkInterface* link);
     void newLink(int linkid);
     void protocolStatusMessage(QString title,QString text);
     void linkChanged(int linkid);
+    void linkError(int linkid, QString message);
 private slots:
     void linkConnected(LinkInterface* link);
     void linkDisonnected(LinkInterface* link);
-    
+    void linkErrorRec(LinkInterface* link,QString error);
 public slots:
     void messageReceived(LinkInterface* link,mavlink_message_t message);
     void protocolStatusMessageRec(QString title,QString text);
+    void enableLogging(bool enabled);
 };
 
 #endif // LINKMANAGER_H

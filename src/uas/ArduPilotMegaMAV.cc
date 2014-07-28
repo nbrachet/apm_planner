@@ -30,6 +30,8 @@ This file is part of the QGROUNDCONTROL project
 #include "ArduPilotMegaMAV.h"
 #include "QsLog.h"
 #include "GAudioOutput.h"
+#include "LinkManager.h"
+
 
 #ifndef MAVLINK_MSG_ID_MOUNT_CONFIGURE
 #include "ardupilotmega/mavlink_msg_mount_configure.h"
@@ -63,10 +65,34 @@ QString CustomMode::operator <<(int aMode)
     return QString::number(aMode);
 }
 
-
-ApmPlane::ApmPlane(planeMode aMode)
+QString CustomMode::colorForMode(int aMode)
 {
-    CustomMode(static_cast<int>(aMode));
+    const uint numberOfKmlColors = 16;
+    const QString kmlColors[] = {"FFFF00FF"
+        , "FF00FF00"
+        , "FFFF0000"
+        , "FFFF2323"
+        , "FFFFCE00"
+        , "FF00CEFF"
+        , "FF009900"
+        , "FF33FFCC"
+        , "FF0000FF"
+        , "FFFFAAAA"
+        , "FFABABAB"
+        , "FF99FF33"
+        , "FF66CC99"
+        , "FFCC3300"
+        , "FF0066FF"};
+
+    if ((sizeof(kmlColors)/sizeof(const char*)) > aMode*numberOfKmlColors ){
+        QLOG_ERROR() << "ColorForMode: not enough colors, so wrapping to 1st color";
+        aMode -= numberOfKmlColors;
+    }
+    return kmlColors[aMode];
+}
+
+ApmPlane::ApmPlane(planeMode aMode) : CustomMode(aMode)
+{
 }
 
 ApmPlane::planeMode ApmPlane::mode()
@@ -128,9 +154,8 @@ QString ApmPlane::stringForMode(int aMode)
     }
 }
 
-ApmCopter::ApmCopter(copterMode aMode)
+ApmCopter::ApmCopter(copterMode aMode) : CustomMode(aMode)
 {
-     CustomMode(static_cast<int>(aMode));
 }
 
 ApmCopter::copterMode ApmCopter::mode()
@@ -165,7 +190,7 @@ QString ApmCopter::stringForMode(int aMode) {
         return "Circle";
         break;
     case POSITION:
-        return "Position";
+        return "Reserved"; // Marked as reserved as not supported since AC3.2
         break;
     case LAND:
         return "Land";
@@ -182,8 +207,8 @@ QString ApmCopter::stringForMode(int aMode) {
     case RESERVED_12:
         return "Reserved";
         break;
-    case HYBRID_LOITER:
-        return "Hybrid Loiter";
+    case POS_HOLD:
+        return "Position Hold";
         break;
     case AUTOTUNE:
         return "Autotune";
@@ -196,9 +221,8 @@ QString ApmCopter::stringForMode(int aMode) {
     }
 }
 
-ApmRover::ApmRover(roverMode aMode)
+ApmRover::ApmRover(roverMode aMode) : CustomMode(aMode)
 {
-     CustomMode(static_cast<int>(aMode));
 }
 
 ApmRover::roverMode ApmRover::mode()
@@ -298,6 +322,7 @@ void ArduPilotMegaMAV::uasConnected()
     QLOG_INFO() << "ArduPilotMegaMAV APM Connected";
     QTimer::singleShot(500,this,SLOT(RequestAllDataStreams())); //Send an initial TX request in 0.5 seconds.
     createNewMAVLinkLog(type);
+    LinkManager::instance()->startLogging();
 }
 
 void ArduPilotMegaMAV::uasDisconnected()
@@ -348,6 +373,7 @@ void ArduPilotMegaMAV::createNewMAVLinkLog(uint8_t type)
     default:
         subDir = "/";
     }
+    LinkManager::instance()->setLogSubDirectory(subDir);
 }
 
 /**

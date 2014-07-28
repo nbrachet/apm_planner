@@ -221,6 +221,7 @@ MainWindow::MainWindow(QWidget *parent):
     }
 
     connect(LinkManager::instance(), SIGNAL(newLink(int)), this, SLOT(addLink(int)), Qt::QueuedConnection);
+    connect(LinkManager::instance(),SIGNAL(linkError(int,QString)),this,SLOT(linkError(int,QString)));
 
 
 
@@ -612,6 +613,7 @@ void MainWindow::buildCommonWidgets()
         engineeringView->setObjectName("VIEW_ENGINEER");
         //engineeringView->setCentralWidget(new QGCDataPlot2D(this));
         plot = new AP2DataPlot2D(this);
+        connect(logPlayer,SIGNAL(logLoaded()),plot,SLOT(clearGraph()));
         plot->addSource(mavlinkDecoder);
         engineeringView->setCentralWidget(plot);
 
@@ -1857,6 +1859,10 @@ void MainWindow::addLink(LinkInterface *link)
 
     // Error handling
     connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);*/
+}
+void MainWindow::linkError(int linkid,QString errorstring)
+{
+    QMessageBox::information(this,"Link Error",errorstring);
 }
 
 void MainWindow::simulateLink(bool simulate) {

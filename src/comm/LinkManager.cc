@@ -42,6 +42,7 @@ This file is part of the APM_PLANNER project
 LinkManager::LinkManager(QObject *parent) :
     QObject(parent)
 {
+    m_mavlinkLoggingEnabled = true;
     m_mavlinkDecoder = new MAVLinkDecoder(this);
     m_mavlinkParser = new MAVLinkProtocol(this);
     m_mavlinkParser->setConnectionManager(this);
@@ -73,10 +74,13 @@ LinkManager::LinkManager(QObject *parent) :
     {
         addUdpConnection(QHostAddress::Any,14550);
     }
-
 }
 void LinkManager::stopLogging()
 {
+    if (!m_mavlinkLoggingEnabled)
+    {
+        return;
+    }
     m_mavlinkParser->stopLogging();
 }
 LinkManager::~LinkManager()
@@ -88,6 +92,7 @@ void LinkManager::loadSettings()
 {
     QSettings settings;
     settings.beginGroup("LINKMANAGER");
+    m_mavlinkLoggingEnabled = settings.value("LOGGING",true).toBool();
     int linkssize = settings.beginReadArray("LINKS");
     for (int i=0;i<linkssize;i++)
     {
@@ -130,12 +135,14 @@ void LinkManager::loadSettings()
             addTcpConnection(QHostAddress(host),port);
         }
     }
+    settings.endArray();
 }
 
 void LinkManager::saveSettings()
 {
     QSettings settings;
     settings.beginGroup("LINKMANAGER");
+    settings.setValue("LOGGING",m_mavlinkLoggingEnabled);
     settings.beginWriteArray("LINKS");
     int index = 0;
     for (QMap<int,LinkInterface*>::const_iterator i= m_connectionMap.constBegin();i!=m_connectionMap.constEnd();i++)
@@ -175,10 +182,53 @@ void LinkManager::saveSettings()
     settings.endGroup();
     settings.sync();
 }
+void LinkManager::setLogSubDirectory(QString dir)
+{
+    if (!dir.startsWith("/"))
+    {
+        m_logSubDir = "/" + dir;
+    }
+    else
+    {
+        m_logSubDir = dir;
+    }
+    if (!m_logSubDir.endsWith("/"))
+    {
+        m_logSubDir += "/";
+    }
+    QDir logdir(QGC::MAVLinkLogDirectory());
+    if (!logdir.cd(m_logSubDir.mid(1)))
+    {
+        logdir.mkdir(m_logSubDir.mid(1));
+    }
+}
+void LinkManager::enableLogging(bool enabled)
+{
+
+    if (enabled)
+    {
+        m_mavlinkLoggingEnabled = enabled;
+        startLogging();
+    }
+    else
+    {
+        stopLogging();
+        m_mavlinkLoggingEnabled = enabled;
+    }
+}
+
+bool LinkManager::loggingEnabled()
+{
+    return m_mavlinkLoggingEnabled;
+}
 
 void LinkManager::startLogging()
 {
-    QString logFileName = QGC::MAVLinkLogDirectory() + QGC::fileNameAsTime();
+    if (!m_mavlinkLoggingEnabled)
+    {
+        return;
+    }
+    QString logFileName = QGC::MAVLinkLogDirectory() + m_logSubDir + QGC::fileNameAsTime();
     QLOG_DEBUG() << "LinkManger::startLogging()" << logFileName;
     m_mavlinkParser->startLogging(logFileName);
 }
@@ -190,6 +240,7 @@ int LinkManager::addSerialConnection()
     connect(connection,SIGNAL(bytesReceived(LinkInterface*,QByteArray)),m_mavlinkParser,SLOT(receiveBytes(LinkInterface*,QByteArray)));
     connect(connection,SIGNAL(connected(LinkInterface*)),this,SLOT(linkConnected(LinkInterface*)));
     connect(connection,SIGNAL(disconnected(LinkInterface*)),this,SLOT(linkDisonnected(LinkInterface*)));
+    connect(connection,SIGNAL(error(LinkInterface*,QString)),this,SLOT(linkErrorRec(LinkInterface*,QString)));
     m_connectionMap.insert(connection->getId(),connection);
     emit newLink(connection->getId());
     saveSettings();
@@ -210,6 +261,7 @@ int LinkManager::addSerialConnection(QString port,int baud)
     connect(connection,SIGNAL(bytesReceived(LinkInterface*,QByteArray)),m_mavlinkParser,SLOT(receiveBytes(LinkInterface*,QByteArray)));
     connect(connection,SIGNAL(connected(LinkInterface*)),this,SLOT(linkConnected(LinkInterface*)));
     connect(connection,SIGNAL(disconnected(LinkInterface*)),this,SLOT(linkDisonnected(LinkInterface*)));
+    connect(connection,SIGNAL(error(LinkInterface*,QString)),this,SLOT(linkErrorRec(LinkInterface*,QString)));
     connection->setPortName(port);
     connection->setBaudRate(baud);
     m_connectionMap.insert(connection->getId(),connection);
@@ -225,6 +277,7 @@ int LinkManager::addUdpConnection(QHostAddress addr,int port)
     connect(udpLink,SIGNAL(bytesReceived(LinkInterface*,QByteArray)),m_mavlinkParser,SLOT(receiveBytes(LinkInterface*,QByteArray)));
     connect(udpLink,SIGNAL(connected(LinkInterface*)),this,SLOT(linkConnected(LinkInterface*)));
     connect(udpLink,SIGNAL(disconnected(LinkInterface*)),this,SLOT(linkDisonnected(LinkInterface*)));
+    connect(udpLink,SIGNAL(error(LinkInterface*,QString)),this,SLOT(linkErrorRec(LinkInterface*,QString)));
     udpLink->connect();
     m_connectionMap.insert(udpLink->getId(),udpLink);
     emit newLink(udpLink->getId());
@@ -257,7 +310,10 @@ void LinkManager::connectLink(int index)
 {
     if (m_connectionMap.contains(index))
     {
-        m_connectionMap.value(index)->connect();
+        if (!m_connectionMap.value(index)->connect())
+        {
+            //Can't connect, there will be a signal emitted.
+        }
     }
 }
 void LinkManager::disconnectLink(int index)
@@ -639,4 +695,8 @@ void LinkManager::linkConnected(LinkInterface* link)
 void LinkManager::linkDisonnected(LinkInterface* link)
 {
     emit linkChanged(link->getId());
+}
+void LinkManager::linkErrorRec(LinkInterface *link,QString errorstring)
+{
+    emit linkError(link->getId(),errorstring);
 }
