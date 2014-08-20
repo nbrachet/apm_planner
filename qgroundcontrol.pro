@@ -378,7 +378,7 @@ FORMS += \
     src/ui/configuration/FlightModeConfig.ui \
     src/ui/configuration/Radio3DRConfig.ui \
     src/ui/configuration/BatteryMonitorConfig.ui \
-    src/ui/configuration/SonarConfig.ui \
+    src/ui/configuration/RangeFinderConfig.ui \
     src/ui/configuration/AirspeedConfig.ui \
     src/ui/configuration/OpticalFlowConfig.ui \
     src/ui/configuration/OsdConfig.ui \
@@ -577,7 +577,7 @@ HEADERS += \
     src/ui/configuration/FlightModeConfig.h \
     src/ui/configuration/Radio3DRConfig.h \
     src/ui/configuration/BatteryMonitorConfig.h \
-    src/ui/configuration/SonarConfig.h \
+    src/ui/configuration/RangeFinderConfig.h \
     src/ui/configuration/AirspeedConfig.h \
     src/ui/configuration/OpticalFlowConfig.h \
     src/ui/configuration/OsdConfig.h \
@@ -798,7 +798,7 @@ SOURCES += src/main.cc \
     src/ui/configuration/FlightModeConfig.cc \
     src/ui/configuration/Radio3DRConfig.cc \
     src/ui/configuration/BatteryMonitorConfig.cc \
-    src/ui/configuration/SonarConfig.cc \
+    src/ui/configuration/RangeFinderConfig.cc \
     src/ui/configuration/AirspeedConfig.cc \
     src/ui/configuration/OpticalFlowConfig.cc \
     src/ui/configuration/OsdConfig.cc \
