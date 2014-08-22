@@ -92,7 +92,7 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
     connect(ui.loadOfflineLogButton,SIGNAL(clicked()),this,SLOT(loadButtonClicked()));
     connect(ui.autoScrollCheckBox,SIGNAL(clicked(bool)),this,SLOT(autoScrollClicked(bool)));
     connect(ui.hideExcelView,SIGNAL(clicked(bool)),ui.tableWidget,SLOT(setHidden(bool)));
-    connect(ui.tableWidget,SIGNAL(cellClicked(int,int)),this,SLOT(tableCellClicked(int,int)));
+    connect(ui.tableWidget,SIGNAL(currentCellChanged(int,int,int,int)),this,SLOT(tableCellChanged(int,int,int,int)));
 
     ui.logTypeLabel->setText("<p align=\"center\"><span style=\" font-size:24pt; color:#0000ff;\">Live Data</span></p>");
 
@@ -255,7 +255,7 @@ void AP2DataPlot2D::plotMouseMove(QMouseEvent *evt)
             newresult.append(m_graphClassMap.keys()[i] + ": " + "ERR" + ((i == m_graphClassMap.keys().size()-1) ? "" : "\n"));
         }
     }
-    QToolTip::showText(QPoint(evt->pos().x() + m_plot->x(),evt->pos().y()+m_plot->y()),newresult);
+    QToolTip::showText(QPoint(evt->globalPos().x() + m_plot->x(),evt->globalPos().y()+m_plot->y()),newresult);
 }
 
 void AP2DataPlot2D::axisDoubleClick(QCPAxis* axis,QCPAxis::SelectablePart part,QMouseEvent* evt)
@@ -369,14 +369,14 @@ void AP2DataPlot2D::showAllClicked()
     m_showOnlyActive = false;
 }
 
-void AP2DataPlot2D::tableCellClicked(int row,int column)
+void AP2DataPlot2D::tableCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
 {
 
-    if (ui.tableWidget->item(row,0))
+    if (ui.tableWidget->item(currentRow,0))
     {
-        if (m_tableHeaderNameMap.contains(ui.tableWidget->item(row,0)->text()))
+        if (m_tableHeaderNameMap.contains(ui.tableWidget->item(currentRow,0)->text()))
         {
-            QString formatstr = m_tableHeaderNameMap.value(ui.tableWidget->item(row,0)->text());
+            QString formatstr = m_tableHeaderNameMap.value(ui.tableWidget->item(currentRow,0)->text());
             QStringList split = formatstr.split(",");
             for (int i=0;i<split.size();i++)
             {
@@ -390,9 +390,9 @@ void AP2DataPlot2D::tableCellClicked(int row,int column)
                 item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
                 ui.tableWidget->setHorizontalHeaderItem(i+1,item);
             }
-            if (ui.tableWidget->horizontalHeaderItem(column) && column != 0)
+            if (ui.tableWidget->horizontalHeaderItem(currentColumn) && currentColumn != 0)
             {
-                QString label = ui.tableWidget->item(row,0)->text() + "." + ui.tableWidget->horizontalHeaderItem(column)->text();
+                QString label = ui.tableWidget->item(currentRow,0)->text() + "." + ui.tableWidget->horizontalHeaderItem(currentColumn)->text();
                 if (m_graphClassMap.contains(label))
                 {
                     //It's an enabled
@@ -438,7 +438,6 @@ void AP2DataPlot2D::tableCellClicked(int row,int column)
             }
         }
     }
-
 }
 
 void AP2DataPlot2D::autoScrollClicked(bool checked)
@@ -924,10 +923,12 @@ void AP2DataPlot2D::itemEnabled(QString name)
             mainGraph1->setData(xlist, ylist);
         }
         mainGraph1->rescaleValueAxis();
-        if (m_graphCount == 1)
+        if (m_graphCount <= 2)
         {
             mainGraph1->rescaleKeyAxis();
+            m_wideAxisRect->axis(QCPAxis::atBottom)->setRangeLower(xlist.at(0));
         }
+
         return;
     } //if (m_logLoaded)
     else
