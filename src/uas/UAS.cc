@@ -1358,8 +1358,28 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit compassMotCalibration(&compassmot_status);
         }
             break;
-        // Messages to ignore
         case MAVLINK_MSG_ID_SCALED_IMU:
+        {
+            mavlink_scaled_imu_t scaledImu;
+            mavlink_msg_scaled_imu_decode(&message, &scaledImu);
+            emit scaledImuMessageUpdate(this, scaledImu);
+        }
+            break;
+        case MAVLINK_MSG_ID_SCALED_IMU2:
+        {
+            mavlink_scaled_imu2_t scaledImu2;
+            mavlink_msg_scaled_imu2_decode(&message, &scaledImu2);
+            emit scaledImu2MessageUpdate(this, scaledImu2);
+        }
+            break;
+        case MAVLINK_MSG_ID_RANGEFINDER:
+        {
+            mavlink_rangefinder_t rangeFinder;
+            mavlink_msg_rangefinder_decode(&message, &rangeFinder);
+            emit rangeFinderUpdate(this, rangeFinder.distance, rangeFinder.voltage);
+        }
+            break;
+        // Messages to ignore
         case MAVLINK_MSG_ID_RAW_PRESSURE:
         case MAVLINK_MSG_ID_SCALED_PRESSURE:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:

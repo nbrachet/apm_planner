@@ -71,7 +71,7 @@ public:
     int addSerialConnection();
     int addUdpConnection(QHostAddress addr,int port);
     int addTcpConnection(QHostAddress addr,int port);
-    void modifySerialConnection(int index,QString port,int baud);
+    void modifySerialConnection(int index,QString port,int baud = -1);
     void modifyTcpConnection(int index,QHostAddress addr,int port);
     void setSerialParityType(int index,int parity);
     void setSerialFlowType(int index,int flow);
@@ -84,7 +84,12 @@ public:
     UASInterface* createUAS(MAVLinkProtocol* mavlink, LinkInterface* link, int sysid, mavlink_heartbeat_t* heartbeat, QObject* parent=NULL);
     void addLink(LinkInterface *link);
     QList<int> getLinks();
+
+    // Remove a link based on instance
     void removeLink(LinkInterface *link);
+    // Remove a link based on unique id
+    void removeLink(int linkId);
+
     LinkInterface::LinkType getLinkType(int linkid);
     bool getLinkConnected(int linkid);
     QString getSerialLinkPort(int linkid);
@@ -103,6 +108,7 @@ public:
 private:
     QMap<int,LinkInterface*> m_connectionMap;
     QMap<int,UASInterface*> m_uasMap;
+    QMap<QString,int> m_portToBaudMap;
     MAVLinkDecoder *m_mavlinkDecoder;
     MAVLinkProtocol *m_mavlinkParser;
     QString m_logSubDir;

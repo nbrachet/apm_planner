@@ -291,7 +291,7 @@ FORMS += \
     src/ui/Linechart.ui \
     src/ui/UASView.ui \
     src/ui/ParameterInterface.ui \
-    src/ui/WaypointList.ui \    
+    src/ui/WaypointList.ui \
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/HDDisplay.ui \
@@ -324,8 +324,8 @@ FORMS += \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
     src/ui/QGCMAVLinkInspector.ui \
-    src/ui/WaypointViewOnlyView.ui \    
-    src/ui/WaypointEditableView.ui \    
+    src/ui/WaypointViewOnlyView.ui \
+    src/ui/WaypointEditableView.ui \
     src/ui/UnconnectedUASInfoWidget.ui \
     src/ui/mavlink/QGCMAVLinkMessageSender.ui \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.ui \
@@ -377,7 +377,7 @@ FORMS += \
     src/ui/configuration/FlightModeConfig.ui \
     src/ui/configuration/Radio3DRConfig.ui \
     src/ui/configuration/BatteryMonitorConfig.ui \
-    src/ui/configuration/SonarConfig.ui \
+    src/ui/configuration/RangeFinderConfig.ui \
     src/ui/configuration/AirspeedConfig.ui \
     src/ui/configuration/OpticalFlowConfig.ui \
     src/ui/configuration/OsdConfig.ui \
@@ -448,7 +448,8 @@ HEADERS += \
     src/comm/TCPLink.h \
     src/ui/ParameterInterface.h \
     src/ui/WaypointList.h \
-    src/Waypoint.h \   
+    src/ui/WaypointNavigation.h \
+    src/Waypoint.h \
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
@@ -514,7 +515,7 @@ HEADERS += \
     src/ui/QGCStatusBar.h \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ui/WaypointEditableView.h \    
+    src/ui/WaypointEditableView.h \
     src/ui/UnconnectedUASInfoWidget.h \
     src/ui/QGCRGBDView.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
@@ -575,7 +576,7 @@ HEADERS += \
     src/ui/configuration/FlightModeConfig.h \
     src/ui/configuration/Radio3DRConfig.h \
     src/ui/configuration/BatteryMonitorConfig.h \
-    src/ui/configuration/SonarConfig.h \
+    src/ui/configuration/RangeFinderConfig.h \
     src/ui/configuration/AirspeedConfig.h \
     src/ui/configuration/OpticalFlowConfig.h \
     src/ui/configuration/OsdConfig.h \
@@ -671,6 +672,7 @@ SOURCES += src/main.cc \
     src/comm/TCPLink.cc \
     src/ui/ParameterInterface.cc \
     src/ui/WaypointList.cc \
+    src/ui/WaypointNavigation.cc \
     src/Waypoint.cc \
     src/ui/ObjectDetectionView.cc \
     src/input/JoystickInput.cc \
@@ -795,7 +797,7 @@ SOURCES += src/main.cc \
     src/ui/configuration/FlightModeConfig.cc \
     src/ui/configuration/Radio3DRConfig.cc \
     src/ui/configuration/BatteryMonitorConfig.cc \
-    src/ui/configuration/SonarConfig.cc \
+    src/ui/configuration/RangeFinderConfig.cc \
     src/ui/configuration/AirspeedConfig.cc \
     src/ui/configuration/OpticalFlowConfig.cc \
     src/ui/configuration/OsdConfig.cc \

@@ -135,6 +135,14 @@ void LinkManager::loadSettings()
             addTcpConnection(QHostAddress(host),port);
         }
     }
+
+    int portsize = settings.beginReadArray("PORTBAUDPAIRS");
+    for (int i=0;i<portsize;i++)
+    {
+        settings.setArrayIndex(i);
+        m_portToBaudMap[settings.value("port").toString()] = settings.value("baud").toInt();
+    }
+    settings.endArray();
     settings.endArray();
 }
 
@@ -177,6 +185,15 @@ void LinkManager::saveSettings()
             settings.setValue("host",link->getHostAddress().toString());
             settings.setValue("port",link->getPort());
         }
+    }
+    settings.endArray();
+    settings.beginWriteArray("PORTBAUDPAIRS");
+    index = 0;
+    for (QMap<QString,int>::const_iterator i=m_portToBaudMap.constBegin();i!=m_portToBaudMap.constEnd();i++)
+    {
+        settings.setArrayIndex(index++);
+        settings.setValue("port",i.key());
+        settings.setValue("baud",i.value());
     }
     settings.endArray();
     settings.endGroup();
@@ -303,6 +320,12 @@ void LinkManager::addLink(LinkInterface *link)
 }
 void LinkManager::removeLink(LinkInterface *link)
 {
+   // This is called with a LINK_ID not an interface. needs mor rework
+    //This function is not yet supported, it will be once we support multiple MAVs
+}
+
+void LinkManager::removeLink(int linkId)
+{
     //This function is not yet supported, it will be once we support multiple MAVs
 }
 
@@ -352,7 +375,23 @@ void LinkManager::modifySerialConnection(int index,QString port,int baud)
         return;
     }
     iface->setPortName(port);
-    iface->setBaudRate(baud);
+    if (baud != -1)
+    {
+        iface->setBaudRate(baud);
+        m_portToBaudMap[port] = baud;
+    }
+    else
+    {
+        //Check the map, if we've had a baud rate on that port before, use it
+        int newbaud = iface->getBaudRate();
+        if (m_portToBaudMap.contains(port))
+        {
+            newbaud = m_portToBaudMap.value(port);
+        }
+        iface->setBaudRate(newbaud);
+        m_portToBaudMap[port] = newbaud;
+    }
+
     emit linkChanged(index);
     saveSettings();
 }
