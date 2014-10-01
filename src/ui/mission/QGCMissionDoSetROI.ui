@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QGCMissionDoChangeSpeed</class>
- <widget class="QWidget" name="QGCMissionDoChangeSpeed">
+ <class>QGCMissionDoSetROI</class>
+ <widget class="QWidget" name="QGCMissionDoSetROI">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10,0">
    <property name="spacing">
     <number>5</number>
    </property>
@@ -42,7 +42,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QDoubleSpinBox" name="param1SpinBox">
+    <widget class="QDoubleSpinBox" name="param5SpinBox">
      <property name="minimumSize">
       <size>
        <width>135</width>
@@ -56,59 +56,19 @@
       </size>
      </property>
      <property name="toolTip">
-      <string>Mission parameter #1</string>
+      <string>Mission parameter #5</string>
      </property>
      <property name="statusTip">
-      <string>Mission parameter #1</string>
+      <string>Mission parameter #5</string>
      </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
      <property name="prefix">
-      <string/>
-     </property>
-     <property name="suffix">
-      <string> (0=AS/1=GS)</string>
+      <string>lat </string>
      </property>
      <property name="decimals">
-      <number>0</number>
-     </property>
-     <property name="maximum">
-      <double>1.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QDoubleSpinBox" name="param2SpinBox">
-     <property name="minimumSize">
-      <size>
-       <width>135</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>135</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="toolTip">
-      <string>Mission parameter #2</string>
-     </property>
-     <property name="statusTip">
-      <string>Mission parameter #2</string>
-     </property>
-     <property name="keyboardTracking">
-      <bool>false</bool>
-     </property>
-     <property name="prefix">
-      <string>speed  </string>
-     </property>
-     <property name="suffix">
-      <string> m/s</string>
-     </property>
-     <property name="decimals">
-      <number>2</number>
+      <number>7</number>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
@@ -119,13 +79,44 @@
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="param3SpinBox">
+    <widget class="QDoubleSpinBox" name="param6SpinBox">
      <property name="minimumSize">
       <size>
-       <width>75</width>
+       <width>135</width>
        <height>0</height>
       </size>
      </property>
+     <property name="maximumSize">
+      <size>
+       <width>135</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Mission parameter #6</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #6</string>
+     </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
+     </property>
+     <property name="prefix">
+      <string>Lon </string>
+     </property>
+     <property name="decimals">
+      <number>7</number>
+     </property>
+     <property name="minimum">
+      <double>-2147483647.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>2147483647.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="param7SpinBox">
      <property name="maximumSize">
       <size>
        <width>75</width>
@@ -133,31 +124,28 @@
       </size>
      </property>
      <property name="toolTip">
-      <string> (0..100, or -1 = no change)</string>
+      <string>Mission parameter #7</string>
      </property>
      <property name="statusTip">
-      <string>Mission parameter #3</string>
+      <string>Mission parameter #7</string>
      </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
      <property name="prefix">
-      <string>Thr </string>
+      <string>alt </string>
      </property>
      <property name="suffix">
-      <string>%</string>
+      <string> m</string>
      </property>
      <property name="decimals">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="minimum">
-      <double>-1.000000000000000</double>
+      <double>-2147483647.000000000000000</double>
      </property>
      <property name="maximum">
-      <double>100.000000000000000</double>
-     </property>
-     <property name="value">
-      <double>-1.000000000000000</double>
+      <double>2147483647.000000000000000</double>
      </property>
     </widget>
    </item>
