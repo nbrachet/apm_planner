@@ -38,6 +38,7 @@ Build APM Planner
 1) From the terminal go to the `apm_planner` directory created when you cloned the repository.
 
 2) Run `qmake -spec macx-g++ qgroundcontrol.pro`
+   Or `qmake -spec macx-g++ CONFIG+=debug qgroundcontrol.pro`
 
 3) Run `make -j8`
 
