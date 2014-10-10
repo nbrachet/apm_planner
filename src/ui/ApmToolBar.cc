@@ -308,6 +308,33 @@ void APMToolBar::showConnectionDialog()
 }
 void APMToolBar::updateLinkDisplay(int linkid)
 {
+#if 0
+    if (LinkManager::instance()->getLinkType(linkid) == LinkInterface::TCP_LINK)
+    {
+        if (m_currentLinkId != linkid)
+        {
+            QLOG_DEBUG() << "APMToolBar: new active TCP Link" << linkid;
+            m_currentLinkId = linkid;
+        }
+
+        int port = LinkManager::instance()->getTcpLinkPort(linkid);
+        QString host = LinkManager::instance()->getTcpLinkHost(linkid).toString();
+        bool connected = LinkManager::instance()->getLinkConnected(linkid);
+        QObject *object = rootObject();
+        object->setProperty("baudrateLabel", QString::number(port));
+        object->setProperty("linkNameLabel", host);
+        setConnection(connected);
+        QLOG_DEBUG() << "APMToolBar: updateLinkDisplay" << host << ":" << port << connected;
+        return;
+    }
+    else if (LinkManager::instance()->getLinkType(linkid) == LinkInterface::SERIAL_LINK
+            && LinkManager::instance()->getLinkType(m_currentLinkId) == LinkInterface::TCP_LINK)
+    {
+        QLOG_DEBUG() << "APMToolBar: new active Serial Link" << linkid;
+        m_currentLinkId = linkid;
+    }
+    else
+#endif
     if (m_currentLinkId != linkid)
     {
         //We only care about our current link
