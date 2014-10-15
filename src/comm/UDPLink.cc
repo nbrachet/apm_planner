@@ -327,7 +327,6 @@ bool UDPLink::hardwareConnect(void)
     connectState = socket->bind(host, port);
 
     QLOG_ERROR() << "bind failed! " << host << ":" << port << " - " << errno << ": " << strerror(errno);
-
 //    }
 
     //Provides Multicast functionality to UdpSocket
