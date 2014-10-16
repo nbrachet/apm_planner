@@ -117,7 +117,7 @@ int UASQuickViewTextItem::minValuePixelSize()
                 valuefont.setPixelSize(valuefont.pixelSize() - 5);
             }
             //titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
-            QLOG_TRACE() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
+//            QLOG_TRACE() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
         }
     }
     return valuefont.pixelSize();
@@ -167,7 +167,7 @@ void UASQuickViewTextItem::resizeEvent(QResizeEvent *event)
                 valuefont.setPixelSize(valuefont.pixelSize() - 5);
             }
             //titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
-            QLOG_TRACE() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
+//            QLOG_TRACE() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
         }
     }
 titlefont.setPixelSize(valuefont.pixelSize() / 1.8);

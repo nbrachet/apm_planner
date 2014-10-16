@@ -580,7 +580,7 @@ void UASView::refresh()
     //setUpdatesEnabled(false);
     //setUpdatesEnabled(true);
     //repaint();
-    QLOG_TRACE() << "UPDATING UAS WIDGET!" << uas->getUASName();
+//    QLOG_TRACE() << "UPDATING UAS WIDGET!" << uas->getUASName();
 
 
     if (generalUpdateCount == 4)
