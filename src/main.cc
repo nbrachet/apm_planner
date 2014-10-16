@@ -72,16 +72,22 @@ int main(int argc, char *argv[])
     QGCCore core(argc, argv);
     // init the logging mechanism
     QsLogging::Logger& logger = QsLogging::Logger::instance();
-    logger.setLoggingLevel(QsLogging::DebugLevel);
+#ifndef NDEBUG
+    logger.setLoggingLevel(QsLogging::TraceLevel);
+#else
+    logger.setLoggingLevel(QsLogging::InfoLevel);
+#endif
 
     const QString sLogPath(QDir(QGC::appDataDirectory()).filePath("log.txt"));
-
     QsLogging::DestinationPtr fileDestination(
        QsLogging::DestinationFactory::MakeFileDestination(sLogPath, true, 0, 5) );
+    logger.addDestination(fileDestination);
+
+#ifndef NDEBUG
     QsLogging::DestinationPtr debugDestination(
        QsLogging::DestinationFactory::MakeDebugOutputDestination() );
     logger.addDestination(debugDestination);
-    logger.addDestination(fileDestination);
+#endif
 
     // This is required to start the logger
     core.initialize();
