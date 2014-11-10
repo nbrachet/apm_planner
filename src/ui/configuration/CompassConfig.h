@@ -99,6 +99,8 @@ private slots:
 
 private:
     void cleanup();
+    void readSettings();
+    void writeSettings();
 
 private:
     Ui::CompassConfig ui;
@@ -116,7 +118,9 @@ private:
     double m_old2ymag;
     double m_old2zmag;
 
+    bool m_compatibilityMode;
     bool m_haveSecondCompass;
+    bool m_haveThirdCompass;
 };
 
 #endif // COMPASSCONFIG_H
