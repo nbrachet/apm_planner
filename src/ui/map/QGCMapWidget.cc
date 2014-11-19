@@ -837,7 +837,7 @@ void QGCMapWidget::redrawWaypointLines(int uas)
     // Delete existing waypoint lines
     foreach (QGraphicsItem* item, group->childItems())
     {
-        QLOG_TRACE() << "DELETE EXISTING WAYPOINT LINES" << item;
+//        QLOG_TRACE() << "DELETE EXISTING WAYPOINT LINES" << item;
         delete item;
     }
 

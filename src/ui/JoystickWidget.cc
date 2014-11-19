@@ -141,7 +141,7 @@ void JoystickWidget::setThrottle(double thrust)
 void JoystickWidget::setX(double x)
 {
     if (isVisible() && m_ui->xValue->intValue() != (int)(x*100)) {
-        QLOG_TRACE() << "X:" << x;
+//        QLOG_TRACE() << "X:" << x;
     }
 
     m_ui->xSlider->setValue(x*100.0);
@@ -151,7 +151,7 @@ void JoystickWidget::setX(double x)
 void JoystickWidget::setY(double y)
 {
     if (isVisible() && m_ui->yValue->intValue() != (int)(y*100)) {
-        QLOG_TRACE() << "Y:" << y;
+//        QLOG_TRACE() << "Y:" << y;
     }
 
     m_ui->ySlider->setValue(y*100.0);
@@ -161,7 +161,7 @@ void JoystickWidget::setY(double y)
 void JoystickWidget::setZ(double z)
 {
     if (isVisible() && (int)m_ui->dial->value() != (int)z) {
-        QLOG_TRACE() << "Z:" << z;
+//        QLOG_TRACE() << "Z:" << z;
     }
 
     m_ui->dial->setValue(z*100.0);

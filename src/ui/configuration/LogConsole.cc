@@ -185,6 +185,7 @@ void Worker::readData() {
             QLOG_DEBUG() << "Nothing read";
         }
         else {
+            QLOG_DEBUG() << "read" << len << "bytes";
             onLineRead(line);
         }
 

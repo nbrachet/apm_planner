@@ -271,11 +271,11 @@ bool JoystickInput::sdlJoystickUpdate(unsigned timeout)
     const int currentYawValue = SDL_JoystickGetAxis(joystick, yawAxis);
     const int currentHatValue = SDL_JoystickGetHat(joystick, 0);
 
-    QLOG_TRACE() << "THROTTLE AXIS is:" << currentThrustValue;
-    QLOG_TRACE() << "X AXIS is:" << currentXValue;
-    QLOG_TRACE() << "Y AXIS is:" << currentYValue;
-    QLOG_TRACE() << "Z AXIS is:" << currentYawValue;
-    QLOG_TRACE() << "HAT is:" << currentHatValue;
+//    QLOG_TRACE() << "THROTTLE AXIS is:" << currentThrustValue;
+//    QLOG_TRACE() << "X AXIS is:" << currentXValue;
+//    QLOG_TRACE() << "Y AXIS is:" << currentYValue;
+//    QLOG_TRACE() << "Z AXIS is:" << currentYawValue;
+//    QLOG_TRACE() << "HAT is:" << currentHatValue;
 
     if (SDL_TICKS_PASSED(ticks, valuesTicks + timeout))
         goto yes;
