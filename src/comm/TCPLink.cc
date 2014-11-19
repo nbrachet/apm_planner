@@ -154,11 +154,13 @@ void TCPLink::writeBytes(const char* data, qint64 size)
 #ifdef TCPLINK_READWRITE_DEBUG
     _writeDebugBytes(data, size);
 #endif
-    _socket->write(data, size);
-
-    // Log the amount and time written out for future data rate calculations.
-    QMutexLocker dataRateLocker(&dataRateMutex);
-    logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
+    qint64 written = _socket->write(data, size);
+    if (written > 0)
+    {
+        // Log the amount and time written out for future data rate calculations.
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, written, QDateTime::currentMSecsSinceEpoch());
+    }
 }
 
 /**
@@ -223,7 +225,8 @@ void TCPLink::_socketDisconnected()
 {
     qDebug() << _name << ": disconnected";
 
-    Q_ASSERT(_socket);
+    if (_socket == NULL)
+        return;
 
     _socketIsConnected = false;
     _socket->deleteLater();
@@ -258,7 +261,8 @@ void TCPLink::newConnection()
 {
     qDebug() << _name << ": new connection";
 
-    Q_ASSERT(_socket == NULL);
+    if (_socket != NULL)
+        _socket->deleteLater();
 
     _socket = _server.nextPendingConnection();
 
