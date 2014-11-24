@@ -116,11 +116,9 @@ public slots:
     void moveDown(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
 
-//    void setIsLoadFileWP();
-//    void setIsReadGlobalWP(bool value);
+    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
 
-
-
+    void wpRadiusChanged(double radius);
 
 signals:
     void clearPathclicked();
@@ -134,7 +132,7 @@ protected:
     QMap<Waypoint*, WaypointViewOnlyView*> wpViewOnlyViews;
     QVBoxLayout* viewOnlyListLayout;
     QVBoxLayout* editableListLayout;
-    UASInterface* uas;
+    UASInterface* m_uas;
     UASWaypointManager* WPM;
     double mavX;
     double mavY;
@@ -147,10 +145,6 @@ protected:
 
 private:
     Ui::WaypointList *m_ui;
-
-
-
-
 
 private slots:
     void on_clearWPListButton_clicked();
