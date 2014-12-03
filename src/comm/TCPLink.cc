@@ -151,9 +151,13 @@ void TCPLink::_writeDebugBytes(const char *data, qint16 size)
 
 void TCPLink::writeBytes(const char* data, qint64 size)
 {
+    if (! _socketIsConnected)
+        return;
+
 #ifdef TCPLINK_READWRITE_DEBUG
     _writeDebugBytes(data, size);
 #endif
+
     qint64 written = _socket->write(data, size);
     if (written > 0)
     {
@@ -259,12 +263,14 @@ bool TCPLink::connect()
 
 void TCPLink::newConnection()
 {
-    qDebug() << _name << ": new connection";
-
     if (_socket != NULL)
-        _socket->deleteLater();
+        disconnect();
 
     _socket = _server.nextPendingConnection();
+    if (_socket == NULL)
+        return;
+
+    qDebug() << _name << ": new connection";
 
     QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
     QObject::connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(_socketError(QAbstractSocket::SocketError)));
