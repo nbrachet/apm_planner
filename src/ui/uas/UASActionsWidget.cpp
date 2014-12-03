@@ -3,6 +3,8 @@
 #include "ApmUiHelpers.h"
 #include "UASActionsWidget.h"
 #include "APMShortcutModesDialog.h"
+#include "PreFlightCalibrationDialog.h"
+
 #include <QMessageBox>
 #include <UAS.h>
 #include <QSettings>
@@ -462,10 +464,10 @@ void UASActionsWidget::setAction()
 }
 
 
-int UASActionsWidget::preFlightWarningBox()
+int UASActionsWidget::preFlightWarningBox(QWidget* parent)
 {
     QLOG_INFO() << "Display Pre-Flight Warning Box";
-    return QMessageBox::critical(this,tr("Warning"),tr("This action must be done when on the gorund. If vehicle is in the air the this action will result in a crash!"),
+    return QMessageBox::critical(parent,tr("Warning"),tr("This action must be done when on the gorund. If vehicle is in the air the this action will result in a crash!"),
                          QMessageBox::Ok,QMessageBox::Abort);
 }
 
@@ -529,24 +531,7 @@ void UASActionsWidget::sendApmPlaneCommand(MAV_CMD command)
 
     case MAV_CMD_PREFLIGHT_CALIBRATION: {
         // Trigger calibration. This command will be only accepted if in pre-flight mode.
-        Q_ASSERT(command == MAV_CMD_PREFLIGHT_CALIBRATION);
-        QLOG_INFO() << "MAV_CMD_PREFLIGHT_CALIBRATION";
-
-        if (preFlightWarningBox() == QMessageBox::Abort)
-            return;
-
-        int confirm = 1;
-        float param1 = 1.0; // Gyro calibration: 0: no, 1: yes
-        float param2 = 0.0; // Magnetometer calibration: 0: no, 1: yes
-        float param3 = 0.0; // Ground pressure: 0: no, 1: yes
-        float param4 = 0.0; // Radio calibration: 0: no, 1: yes
-        float param5 = 0.0; // Accelerometer calibration: 0: no, 1: yes
-        float param6 = 0.0; // | Empty|
-        float param7 = 0.0; // | Empty|
-        int component = MAV_COMP_ID_ALL;
-        m_uas->executeCommand(command,
-                              confirm, param1, param2, param3,
-                              param4, param5, param6, param7, component);
+        showPreflightCalibrationDialog();
     } break;
 
     case MAV_CMD_MISSION_START: {
@@ -577,7 +562,7 @@ void UASActionsWidget::sendApmPlaneCommand(MAV_CMD command)
         Q_ASSERT(command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN);
         QLOG_INFO() << "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN";
 
-        if (preFlightWarningBox() == QMessageBox::Abort)
+        if (preFlightWarningBox(this) == QMessageBox::Abort)
             return;
 
         int confirm = 1;
@@ -645,24 +630,7 @@ void UASActionsWidget::sendApmCopterCommand(MAV_CMD command)
 
     case MAV_CMD_PREFLIGHT_CALIBRATION: {
         // Trigger calibration. This command will be only accepted if in pre-flight mode.
-        Q_ASSERT(command == MAV_CMD_PREFLIGHT_CALIBRATION);
-        QLOG_INFO() << "MAV_CMD_PREFLIGHT_CALIBRATION";
-
-        if (preFlightWarningBox() == QMessageBox::Abort)
-            return;
-
-        int confirm = 1;
-        float param1 = 1.0; // Gyro calibration: 0: no, 1: yes
-        float param2 = 0.0; // Magnetometer calibration: 0: no, 1: yes
-        float param3 = 0.0; // Ground pressure: 0: no, 1: yes
-        float param4 = 0.0; // Radio calibration: 0: no, 1: yes
-        float param5 = 0.0; // Accelerometer calibration: 0: no, 1: yes
-        float param6 = 0.0; // | Empty|
-        float param7 = 0.0; // | Empty|
-        int component = MAV_COMP_ID_ALL;
-        m_uas->executeCommand(command,
-                              confirm, param1, param2, param3,
-                              param4, param5, param6, param7, component);
+        showPreflightCalibrationDialog();
     } break;
 
     case MAV_CMD_MISSION_START: {
@@ -693,7 +661,7 @@ void UASActionsWidget::sendApmCopterCommand(MAV_CMD command)
         Q_ASSERT(command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN);
         QLOG_INFO() << "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN";
 
-        if (preFlightWarningBox() == QMessageBox::Abort)
+        if (preFlightWarningBox(this) == QMessageBox::Abort)
             return;
 
         int confirm = 1;
@@ -743,24 +711,7 @@ void UASActionsWidget::sendApmRoverCommand(MAV_CMD command)
 
     case MAV_CMD_PREFLIGHT_CALIBRATION: {
         // Trigger calibration. This command will be only accepted if in pre-flight mode.
-        Q_ASSERT(command == MAV_CMD_PREFLIGHT_CALIBRATION);
-        QLOG_INFO() << "MAV_CMD_PREFLIGHT_CALIBRATION";
-
-        if (preFlightWarningBox() == QMessageBox::Abort)
-            return;
-
-        int confirm = 1;
-        float param1 = 1.0; // Gyro calibration: 0: no, 1: yes
-        float param2 = 0.0; // Magnetometer calibration: 0: no, 1: yes
-        float param3 = 0.0; // Ground pressure: 0: no, 1: yes
-        float param4 = 0.0; // Radio calibration: 0: no, 1: yes
-        float param5 = 0.0; // Accelerometer calibration: 0: no, 1: yes
-        float param6 = 0.0; // | Empty|
-        float param7 = 0.0; // | Empty|
-        int component = MAV_COMP_ID_ALL;
-        m_uas->executeCommand(command,
-                              confirm, param1, param2, param3,
-                              param4, param5, param6, param7, component);
+        showPreflightCalibrationDialog();
     } break;
 
     case MAV_CMD_MISSION_START: {
@@ -791,7 +742,7 @@ void UASActionsWidget::sendApmRoverCommand(MAV_CMD command)
         Q_ASSERT(command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN);
         QLOG_INFO() << "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN";
 
-        if (preFlightWarningBox() == QMessageBox::Abort)
+        if (preFlightWarningBox(this) == QMessageBox::Abort)
             return;
 
         int confirm = 1;
@@ -1025,5 +976,15 @@ void UASActionsWidget::loadApmSettings()
      }
 }
 
+void UASActionsWidget::showPreflightCalibrationDialog()
+{
+    PreFlightCalibrationDialog *dialog = new PreFlightCalibrationDialog(this);
+    if(dialog->exec() == 1){
+        QLOG_DEBUG() << "Preflight calibration accepted";
+    } else {
+        QLOG_DEBUG() << "Preflight calibration rejected";
+    }
+
+}
 
 

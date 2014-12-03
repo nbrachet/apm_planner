@@ -713,6 +713,8 @@ void AP2DataPlot2D::loadButtonClicked()
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100); //Default range of 0-100 milliseconds?
         m_currentIndex = QDateTime::currentMSecsSinceEpoch();
         m_startIndex = m_currentIndex;
+        m_sharedDb.close();
+        QSqlDatabase::removeDatabase("QSQLITE");
         return;
     }
     QFileDialog *dialog = new QFileDialog(this,"Load File",QGC::logDirectory(),"Dataflash Log Files (*.log *.bin);;All Files (*.*)");
@@ -1216,19 +1218,18 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
         }
     }
 
-    m_scrollStartIndex = 0;
-    m_scrollEndIndex = currentIndex;
-    ui.horizontalScrollBar->setMinimum(m_scrollStartIndex);
-    ui.horizontalScrollBar->setMaximum(m_scrollEndIndex);
-
     //ui.tableWidget->setRowCount(currentIndex);
     m_tableModel = new AP2DataPlot2DModel(&m_sharedDb,this);
     m_tableFilterProxyModel = new QSortFilterProxyModel(this);
     m_tableFilterProxyModel->setSourceModel(m_tableModel);
     ui.tableWidget->setModel(m_tableFilterProxyModel);
-    //connect(ui.tableWidget->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),m_tableModel,SLOT(selectedRowChanged(QModelIndex,QModelIndex)));
-    //connect(ui.tableWidget->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(selectedRowChanged(QModelIndex,QModelIndex)));
     connect(ui.tableWidget->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),this,SLOT(selectedRowChanged(QModelIndex,QModelIndex)));
+
+    m_scrollStartIndex = 0;
+    m_scrollEndIndex = m_tableModel->rowCount();
+    ui.horizontalScrollBar->setMinimum(m_scrollStartIndex);
+    ui.horizontalScrollBar->setMaximum(m_scrollEndIndex);
+
     m_progressDialog->hide();
     delete m_progressDialog;
     m_progressDialog=0;

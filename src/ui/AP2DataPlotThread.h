@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QVariantMap>
 #include <QSqlDatabase>
+#include "MAVLinkDecoder.h"
 #include "libs/mavlink/include/mavlink/v1.0/ardupilotmega/mavlink.h"
 class AP2DataPlotThread : public QThread
 {
@@ -19,6 +20,18 @@ private:
     QSqlDatabase *m_db;
     QString makeInsertTableString(QString tablename, QString variablestr);
     QString makeCreateTableString(QString tablename, QString formatstr,QString variablestr);
+    int m_fieldCount;
+    MAVLinkDecoder *decoder;
+    int m_errorCount;
+    QMap<QString,QString> m_msgNameToInsertQuery;
+    void loadBinaryLog();
+    void loadAsciiLog();
+    void loadTLog();
+    bool createFMTTable();
+    bool createFMTInsert(QSqlQuery *query);
+    bool createIndexTable();
+    bool createIndexInsert(QSqlQuery *query);
+    MAV_TYPE m_loadedLogType;
 protected:
     void run();
 signals:
@@ -28,8 +41,6 @@ signals:
     void done(int errors,MAV_TYPE type);
     void error(QString errorstr);
     void lineRead(QString line);
-public slots:
-
 };
 
 #endif // AP2DATAPLOTTHREAD_H
