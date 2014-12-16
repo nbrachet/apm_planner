@@ -96,11 +96,22 @@ private slots:
     void graphGroupingChanged(QList<AP2DataPlotAxisDialog::GraphRange> graphRangeList);
     void selectedRowChanged(QModelIndex current,QModelIndex previous);
 
+    void modeCheckBoxClicked(bool checked);
+    void errCheckBoxClicked(bool checked);
+    void evCheckBoxClicked(bool checked);
+    void sortItemChanged(QTreeWidgetItem* item,int col);
+    void sortAcceptClicked();
+    void sortCancelClicked();
+    void showSortButtonClicked();
+    void sortSelectAllClicked();
+    void sortSelectInvertClicked();
+
 private:
     void showEvent(QShowEvent *evt);
     void hideEvent(QHideEvent *evt);
     AP2DataPlot2DModel *m_tableModel;
     QSortFilterProxyModel *m_tableFilterProxyModel;
+    QList<QString> m_tableFilterList;
 
 private:
     QTimer *m_updateTimer;
@@ -165,7 +176,7 @@ private:
 
     MAV_TYPE m_loadedLogMavType;
 
-
+    QString m_filename;
 };
 
 #endif // AP2DATAPLOT2D_H
