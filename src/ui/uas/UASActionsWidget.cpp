@@ -43,7 +43,7 @@ void UASActionsWidget::setupApmCopterModes()
     ui.armedStatuslabel->setVisible(true);
 
     // Setup configurable shortcut action
-    ui.opt1ModeButton->setText("none");
+    ui.opt1ModeButton->setText("Pos Hold");
     ui.opt2ModeButton->setText("Acro");
     ui.opt3ModeButton->setText("Alt Hold");
     ui.opt4ModeButton->setText("Land");
@@ -467,7 +467,7 @@ void UASActionsWidget::setAction()
 int UASActionsWidget::preFlightWarningBox(QWidget* parent)
 {
     QLOG_INFO() << "Display Pre-Flight Warning Box";
-    return QMessageBox::critical(parent,tr("Warning"),tr("This action must be done when on the gorund. If vehicle is in the air the this action will result in a crash!"),
+    return QMessageBox::critical(parent,tr("Warning"),tr("This action must be done when on the ground. If vehicle is in the air the this action will result in a crash!"),
                          QMessageBox::Ok,QMessageBox::Abort);
 }
 
