@@ -6,34 +6,57 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1250</width>
-    <height>545</height>
+    <width>1586</width>
+    <height>573</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_6">
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>6</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
+    <number>6</number>
+   </property>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0">
+    <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QWidget" name="widget" native="true">
            <layout class="QVBoxLayout" name="verticalLayout_3">
+            <property name="leftMargin">
+             <number>3</number>
+            </property>
+            <property name="topMargin">
+             <number>3</number>
+            </property>
+            <property name="rightMargin">
+             <number>3</number>
+            </property>
+            <property name="bottomMargin">
+             <number>3</number>
+            </property>
             <item>
-             <widget class="QLabel" name="logTypeLabel">
-              <property name="text">
-               <string/>
+             <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="20,1">
+              <property name="spacing">
+               <number>2</number>
               </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_5">
+                <property name="spacing">
+                 <number>1</number>
+                </property>
                 <item>
                  <widget class="QScrollBar" name="horizontalScrollBar">
                   <property name="orientation">
@@ -43,6 +66,25 @@
                 </item>
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
+                  <property name="sizeConstraint">
+                   <enum>QLayout::SetDefaultConstraint</enum>
+                  </property>
+                  <item>
+                   <spacer name="horizontalSpacer_5">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                     <enum>QSizePolicy::Minimum</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>10</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
                   <item>
                    <widget class="QCheckBox" name="modeDisplayCheckBox">
                     <property name="text">
@@ -74,6 +116,35 @@
                    </widget>
                   </item>
                   <item>
+                   <spacer name="horizontalSpacer_4">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                     <enum>QSizePolicy::Preferred</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>25</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="logTypeLabel">
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>&lt;i&gt;Log Name&lt;/i&gt;</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <spacer name="horizontalSpacer_3">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
@@ -92,6 +163,9 @@
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_4">
+                <property name="spacing">
+                 <number>1</number>
+                </property>
                 <item>
                  <widget class="QLabel" name="label">
                   <property name="maximumSize">
@@ -142,7 +216,7 @@
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="5,2">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="5,1">
               <item>
                <widget class="QTableView" name="tableWidget"/>
               </item>
@@ -152,6 +226,18 @@
                  <string>Sorting</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
+                 <property name="leftMargin">
+                  <number>3</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>3</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>3</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>3</number>
+                 </property>
                  <item>
                   <widget class="QTreeWidget" name="sortSelectTreeWidget">
                    <column>
@@ -220,6 +306,22 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <spacer name="horizontalSpacer_6">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>10</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
        <item>
         <widget class="QPushButton" name="downloadPushButton">
          <property name="text">

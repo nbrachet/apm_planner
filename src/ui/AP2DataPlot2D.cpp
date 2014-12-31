@@ -19,24 +19,34 @@
 #include "MainWindow.h"
 #include "AP2DataPlot2DModel.h"
 #include "ArduPilotMegaMAV.h"
+
+static const QString DATA_PLOT_LIVE_DATA = "<p align=\"center\"><span style=\" font-size:14pt; color:darkblue;\">Live Data</span></p>";
+static const QString DATA_PLOT_LOG_LOADED = "<p align=\"center\"><span style=\" font-size:14pt; color:darkred;\">Log Loaded: %1</span></p>";
+
 AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
-    m_uas(NULL),
-    m_logDownloadDialog(NULL),
     m_updateTimer(NULL),
+    m_showOnlyActive(false),
+    m_graphCount(0),
+    m_plot(NULL),
+    m_wideAxisRect(NULL),
+    m_logLoaderThread(NULL),
+    m_dataSelectionScreen(NULL),
+    m_model(NULL),
+    m_logLoaded(false),
+    m_currentIndex(0),
+    m_startIndex(0),
+    m_addGraphAction(NULL),
+    m_uas(NULL),
+    m_progressDialog(NULL),
+    m_axisGroupingDialog(NULL),
     m_tlogReplayEnabled(false),
-    m_loadedLogMavType(MAV_TYPE_ENUM_END)
+    m_logDownloadDialog(NULL),
+    m_droneshareUploadDialog(NULL),
+    m_loadedLogMavType(MAV_TYPE_ENUM_END),
+    m_statusTextPos(0)
 {
-    m_startIndex = 0;
-    m_axisGroupingDialog = 0;
-    m_logLoaderThread= 0;
-    m_logLoaded = false;
-    m_progressDialog=0;
-    m_currentIndex=0;
-    m_graphCount=0;
-    m_showOnlyActive = false;
-
-
     ui.setupUi(this);
+
     connect(ui.sortSelectTreeWidget,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(sortItemChanged(QTreeWidgetItem*,int)));
     connect(ui.sortAcceptPushButton,SIGNAL(clicked()),this,SLOT(sortAcceptClicked()));
     connect(ui.sortCancelPushButton,SIGNAL(clicked()),this,SLOT(sortCancelClicked()));
@@ -108,11 +118,10 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent) : QWidget(parent),
     connect(ui.hideExcelView,SIGNAL(clicked(bool)),ui.tableWidget,SLOT(setHidden(bool)));
     connect(ui.tableWidget,SIGNAL(currentCellChanged(int,int,int,int)),this,SLOT(tableCellChanged(int,int,int,int)));
 
-    ui.logTypeLabel->setText("<p align=\"center\"><span style=\" font-size:24pt; color:#0000ff;\">Live Data</span></p>");
-
+    ui.logTypeLabel->setText(DATA_PLOT_LIVE_DATA);
 
     connect(ui.graphControlsPushButton,SIGNAL(clicked()),this,SLOT(graphControlsButtonClicked()));
-    model = new QStandardItemModel();
+    m_model = new QStandardItemModel();
     connect(ui.toKMLPushButton, SIGNAL(clicked()), this, SIGNAL(toKMLClicked()));
     connect(ui.horizontalScrollBar,SIGNAL(sliderMoved(int)),this,SLOT(horizontalScrollMoved(int)));
 
@@ -731,7 +740,7 @@ void AP2DataPlot2D::loadButtonClicked()
         ui.hideExcelView->setVisible(false);
         ui.hideExcelView->setChecked(false);
         ui.tableWidget->setVisible(false);
-        ui.logTypeLabel->setText("<p align=\"center\"><span style=\" font-size:24pt; color:#0000ff;\">Live Data</span></p>");
+        ui.logTypeLabel->setText(DATA_PLOT_LIVE_DATA);
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setTickLabelType(QCPAxis::ltDateTime);
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setDateTimeFormat("hh:mm:ss");
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100); //Default range of 0-100 milliseconds?
@@ -741,7 +750,7 @@ void AP2DataPlot2D::loadButtonClicked()
         QSqlDatabase::removeDatabase("QSQLITE");
         return;
     }
-    QFileDialog *dialog = new QFileDialog(this,"Load File",QGC::logDirectory(),"Dataflash Log Files (*.log *.bin);;All Files (*.*)");
+    QFileDialog *dialog = new QFileDialog(this,"Load File",QGC::logDirectory(),"Dataflash Log Files (*.log *.bin *.tlog);;All Files (*.*)");
     dialog->setFileMode(QFileDialog::ExistingFile);
     dialog->open(this, SLOT(loadDialogAccepted()));
 }
@@ -772,7 +781,9 @@ void AP2DataPlot2D::loadDialogAccepted()
     m_graphCount=0;
     m_dataList.clear();
 
-    ui.logTypeLabel->setText("<p align=\"center\"><span style=\" font-size:24pt; color:#ff0000;\">Offline Log Loaded: " + m_filename.mid(m_filename.lastIndexOf("/")+1) + "</span></p>");
+    QString logTitle = DATA_PLOT_LOG_LOADED;
+    QString filename =m_filename.mid(m_filename.lastIndexOf("/")+1);
+    ui.logTypeLabel->setText( logTitle.arg(filename));
 
     m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setTickLabelType(QCPAxis::ltNumber);
     m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100);
@@ -796,7 +807,6 @@ void AP2DataPlot2D::loadDialogAccepted()
     connect(m_logLoaderThread,SIGNAL(done(int,MAV_TYPE)),this,SLOT(threadDone(int,MAV_TYPE)));
     connect(m_logLoaderThread,SIGNAL(finished()),this,SLOT(threadTerminated()));
     connect(m_logLoaderThread,SIGNAL(payloadDecoded(int,QString,QVariantMap)),this,SLOT(payloadDecoded(int,QString,QVariantMap)));
-    currentIndex=0;
     m_logLoaderThread->loadFile(m_filename,&m_sharedDb);
 }
 
@@ -820,6 +830,9 @@ AP2DataPlot2D::~AP2DataPlot2D()
         delete m_axisGroupingDialog;
         m_axisGroupingDialog = NULL;
     }
+
+    delete m_model;
+    m_model = NULL;
 }
 void AP2DataPlot2D::itemEnabled(QString name)
 {
@@ -1063,7 +1076,7 @@ void AP2DataPlot2D::clearGraph()
         ui.hideExcelView->setVisible(false);
         ui.hideExcelView->setChecked(false);
         ui.tableWidget->setVisible(false);
-        ui.logTypeLabel->setText("<p align=\"center\"><span style=\" font-size:24pt; color:#0000ff;\">Live Data</span></p>");
+        ui.logTypeLabel->setText(DATA_PLOT_LIVE_DATA);
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setTickLabelType(QCPAxis::ltDateTime);
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setDateTimeFormat("hh:mm:ss");
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100); //Default range of 0-100 milliseconds?
@@ -1087,6 +1100,49 @@ void AP2DataPlot2D::loadStarted()
 void AP2DataPlot2D::loadProgress(qint64 pos,qint64 size)
 {
     m_progressDialog->setValue(((double)pos / (double)size) * 100.0);
+}
+
+int AP2DataPlot2D::getStatusTextPos()
+{
+    static const int numberOfPositions = 4;
+    m_statusTextPos++;
+    if(m_statusTextPos > numberOfPositions)
+        m_statusTextPos = 1;
+    return m_statusTextPos;
+}
+
+void AP2DataPlot2D::plotTextArrow(int index, const QString &text, const QString& graph, QCheckBox* checkBox)
+{
+    QLOG_DEBUG() << "plotTextArrow:" << index << " to " << graph;
+    int pos = getStatusTextPos();
+    QCPAxis *xAxis = m_wideAxisRect->axis(QCPAxis::atBottom);
+
+    QCPItemText *itemtext = new QCPItemText(m_plot);
+    itemtext->setText(text);
+    itemtext->setPositionAlignment(Qt::AlignLeft | Qt::AlignBottom);
+    itemtext->position->setAxes(xAxis,m_graphClassMap[graph].axis);
+
+    m_graphClassMap[graph].itemList.append(itemtext);
+
+    QCPItemLine *itemline = new QCPItemLine(m_plot);
+    m_graphClassMap[graph].itemList.append(itemline);
+
+    itemline->start->setAxes(xAxis, m_graphClassMap[graph].axis);
+    itemline->start->setCoords(index, pos);
+    itemline->end->setAxes(xAxis, m_graphClassMap[graph].axis);
+    itemline->end->setCoords(index, 0.0);
+    itemline->setTail(QCPLineEnding::esDisc);
+    itemline->setHead(QCPLineEnding::esSpikeArrow);
+
+    m_plot->addItem(itemline);
+    itemtext->position->setCoords(itemline->start->coords());
+    m_plot->addItem(itemtext);
+
+    if (checkBox && !checkBox->isChecked())
+    {
+        itemtext->setVisible(false);
+        itemline->setVisible(false);
+    }
 }
 
 void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
@@ -1229,31 +1285,8 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
                 }
             }
             QLOG_DEBUG() << "Mode change at index" << index << "to" << mode;
-            QCPAxis *xAxis = m_wideAxisRect->axis(QCPAxis::atBottom);
-            QCPItemText *itemtext = new QCPItemText(m_plot);
-            itemtext->setText(mode);
-            itemtext->position->setAxes(xAxis,m_graphClassMap["MODE"].axis);
-            itemtext->position->setCoords((index),1.0);
-            m_plot->addItem(itemtext);
-            m_graphClassMap["MODE"].itemList.append(itemtext);
+            plotTextArrow(index, mode, "MODE",ui.modeDisplayCheckBox);
             m_graphClassMap["MODE"].modeMap[index] = mode;
-
-
-            QCPItemLine *itemline = new QCPItemLine(m_plot);
-            m_graphClassMap["MODE"].itemList.append(itemline);
-            itemline->start->setParentAnchor(itemtext->bottom);
-            itemline->start->setAxes(xAxis, m_graphClassMap["MODE"].axis);
-            itemline->start->setCoords(0.0, 5.0);
-            itemline->end->setAxes(xAxis, m_graphClassMap["MODE"].axis);
-            itemline->end->setCoords((index), 0.0);
-            itemline->setTail(QCPLineEnding::esDisc);
-            itemline->setHead(QCPLineEnding::esSpikeArrow);
-            m_plot->addItem(itemline);
-            if (!ui.modeDisplayCheckBox->isChecked())
-            {
-                itemtext->setVisible(false);
-                itemline->setVisible(false);
-            }
         }
     }
 
@@ -1313,34 +1346,8 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
                 subsys = record.value("Subsys").toString().toInt();
             }
             QPair<QString,QString> errortext = ArduPilotMegaMAV::getErrText(subsys,ecode);
+            plotTextArrow(index, errortext.first + "\n" + errortext.second, "ERR",ui.errDisplayCheckBox);
 
-            //QLOG_DEBUG() << "Mode change at index" << index << "to" << mode;
-            QCPAxis *xAxis = m_wideAxisRect->axis(QCPAxis::atBottom);
-            QCPItemText *itemtext = new QCPItemText(m_plot);
-            itemtext->setText(errortext.first + "\n" + errortext.second);
-            itemtext->position->setAxes(xAxis,m_graphClassMap["ERR"].axis);
-            itemtext->position->setCoords((index),4.0);
-            m_plot->addItem(itemtext);
-            m_graphClassMap["ERR"].itemList.append(itemtext);
-            //m_graphClassMap["ERR"].modeMap[index] = subsystemstring + "\n" + ecodestring;
-
-
-            QCPItemLine *itemline = new QCPItemLine(m_plot);
-            m_graphClassMap["ERR"].itemList.append(itemline);
-            itemline->start->setParentAnchor(itemtext->bottom);
-            itemline->start->setAxes(xAxis, m_graphClassMap["ERR"].axis);
-            itemline->start->setCoords(0.0, 5.0);
-            itemline->end->setAxes(xAxis, m_graphClassMap["ERR"].axis);
-            itemline->end->setCoords((index), 0.0);
-            itemline->setTail(QCPLineEnding::esDisc);
-            itemline->setHead(QCPLineEnding::esSpikeArrow);
-            m_plot->addItem(itemline);
-
-            if (!ui.errDisplayCheckBox->isChecked())
-            {
-                itemtext->setVisible(false);
-                itemline->setVisible(false);
-            }
         }
     }
 
@@ -1400,33 +1407,10 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
             ecodestring = ArduPilotMegaMAV::getNameFromEventId(ecode);
 
             //QLOG_DEBUG() << "Mode change at index" << index << "to" << mode;
-            QCPAxis *xAxis = m_wideAxisRect->axis(QCPAxis::atBottom);
-            QCPItemText *itemtext = new QCPItemText(m_plot);
-            itemtext->setText(ecodestring);
-            itemtext->position->setAxes(xAxis,m_graphClassMap["EV"].axis);
-            itemtext->position->setCoords((index),2.5);
-            m_plot->addItem(itemtext);
-            m_graphClassMap["EV"].itemList.append(itemtext);
-
-            QCPItemLine *itemline = new QCPItemLine(m_plot);
-            m_graphClassMap["EV"].itemList.append(itemline);
-            itemline->start->setParentAnchor(itemtext->bottom);
-            itemline->start->setAxes(xAxis, m_graphClassMap["EV"].axis);
-            itemline->start->setCoords(0.0, 5.0);
-            itemline->end->setAxes(xAxis, m_graphClassMap["EV"].axis);
-            itemline->end->setCoords((index), 0.0);
-            itemline->setTail(QCPLineEnding::esDisc);
-            itemline->setHead(QCPLineEnding::esSpikeArrow);
-            m_plot->addItem(itemline);
-            if (!ui.evDisplayCheckBox->isChecked())
-            {
-                itemtext->setVisible(false);
-                itemline->setVisible(false);
-            }
+            plotTextArrow(index, ecodestring, "EV",ui.evDisplayCheckBox);
         }
     }
 
-    //ui.tableWidget->setRowCount(currentIndex);
     m_tableModel = new AP2DataPlot2DModel(&m_sharedDb,this);
     m_tableFilterProxyModel = new QSortFilterProxyModel(this);
     m_tableFilterProxyModel->setSourceModel(m_tableModel);

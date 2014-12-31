@@ -112,8 +112,12 @@ private:
     AP2DataPlot2DModel *m_tableModel;
     QSortFilterProxyModel *m_tableFilterProxyModel;
     QList<QString> m_tableFilterList;
+    int getStatusTextPos();
+    void plotTextArrow(int index, const QString& text, const QString& graph, QCheckBox *checkBox = NULL);
 
 private:
+    Ui::AP2DataPlot2D ui;
+
     QTimer *m_updateTimer;
     class Graph
     {
@@ -152,10 +156,9 @@ private:
     int m_graphCount;
     QCustomPlot *m_plot;
     QCPAxisRect *m_wideAxisRect;
-    Ui::AP2DataPlot2D ui;
     AP2DataPlotThread *m_logLoaderThread;
     DataSelectionScreen *m_dataSelectionScreen;
-    QStandardItemModel *model;
+    QStandardItemModel *m_model;
     bool m_logLoaded;
     //Current "index", X axis on graph. Used to keep all the graphs lined up.
     qint64 m_currentIndex;
@@ -177,6 +180,7 @@ private:
     MAV_TYPE m_loadedLogMavType;
 
     QString m_filename;
+    int m_statusTextPos;
 };
 
 #endif // AP2DATAPLOT2D_H
