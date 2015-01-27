@@ -362,6 +362,7 @@ FORMS += \
     src/ui/mission/QGCMissionNavLand.ui \
     src/ui/mission/QGCMissionNavTakeoff.ui \
     src/ui/mission/QGCMissionNavSweep.ui \
+    src/ui/mission/QGCMissionNavContinueChangeAlt.ui \
     src/ui/mission/QGCMissionDoStartSearch.ui \
     src/ui/mission/QGCMissionDoFinishSearch.ui \
     src/ui/QGCVehicleConfig.ui \
@@ -422,7 +423,8 @@ FORMS += \
     src/ui/MissionElevationDisplay.ui \
     src/ui/DroneshareUploadDialog.ui \
     src/ui/DroneshareDialog.ui \
-    src/ui/uas/PreFlightCalibrationDialog.ui
+    src/ui/uas/PreFlightCalibrationDialog.ui \
+    src/ui/configuration/RadioFlashWizard.ui
 
 HEADERS += \
     src/MG.h \
@@ -541,6 +543,7 @@ HEADERS += \
     src/ui/mission/QGCMissionNavLand.h \
     src/ui/mission/QGCMissionNavTakeoff.h \
     src/ui/mission/QGCMissionNavSweep.h \
+    src/ui/mission/QGCMissionNavContinueChangeAlt.h \
     src/ui/mission/QGCMissionDoStartSearch.h \
     src/ui/mission/QGCMissionDoFinishSearch.h \
     src/ui/QGCVehicleConfig.h \
@@ -644,9 +647,8 @@ HEADERS += \
     src/comm/AbsPositionOverview.h \
     src/comm/MissionOverview.h \
     src/ui/AP2DataPlot2DModel.h \
-    src/ui/uas/PreFlightCalibrationDialog.h
-#    libs/sik_uploader/qsikuploader.h \
-#    libs/sik_uploader/sikuploader.h \
+    src/ui/uas/PreFlightCalibrationDialog.h \
+    src/ui/configuration/RadioFlashWizard.h
 
 SOURCES += src/main.cc \
     src/QGCCore.cc \
@@ -758,6 +760,7 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionNavLand.cc \
     src/ui/mission/QGCMissionNavTakeoff.cc \
     src/ui/mission/QGCMissionNavSweep.cc \
+    src/ui/mission/QGCMissionNavContinueChangeAlt.cc \
     src/ui/mission/QGCMissionDoStartSearch.cc \
     src/ui/mission/QGCMissionDoFinishSearch.cc \
     src/ui/QGCVehicleConfig.cc \
@@ -860,9 +863,8 @@ SOURCES += src/main.cc \
     src/comm/AbsPositionOverview.cc \
     src/comm/MissionOverview.cc \
     src/ui/AP2DataPlot2DModel.cc \
-    src/ui/uas/PreFlightCalibrationDialog.cpp
-#    libs/sik_uploader/qsikuploader.cpp \
-#    libs/sik_uploader/sikuploader.cpp \
+    src/ui/uas/PreFlightCalibrationDialog.cpp \
+    src/ui/configuration/RadioFlashWizard.cpp
 
 OTHER_FILES += \
     qml/components/DigitalDisplay.qml \

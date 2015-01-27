@@ -92,43 +92,8 @@ TerminalConsole::TerminalConsole(QWidget *parent) :
 
     //Keep refreshing the serial port list
     connect(&m_timer,SIGNAL(timeout()),this,SLOT(populateSerialPorts()));
-
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
-    if (UASManager::instance()->getActiveUAS())
-    {
-        activeUASSet(UASManager::instance()->getActiveUAS());
-    }
 }
 
-void TerminalConsole::activeUASSet(UASInterface *uas)
-{
-    if(m_uas) {
-        disconnect(m_uas,SIGNAL(connected()),this,SLOT(uasConnected()));
-        disconnect(m_uas,SIGNAL(disconnected()),this,SLOT(uasDisconnected()));
-    }
-    m_uas = uas;
-    if (uas) {
-        connect(m_uas,SIGNAL(connected()),this,SLOT(uasConnected()));
-        connect(m_uas,SIGNAL(disconnected()),this,SLOT(uasDisconnected()));
-        uasConnected();
-    }
-}
-
-void TerminalConsole::uasConnected()
-{
-    ui->connectButton->setEnabled(false);
-    if(m_windowVisible){
-        MainWindow::instance()->toolBar().disableConnectWidget(false);
-    }
-}
-
-void TerminalConsole::uasDisconnected()
-{
-    ui->connectButton->setEnabled(true);
-    if(m_windowVisible){
-        MainWindow::instance()->toolBar().disableConnectWidget(true);
-    }
-}
 
 void TerminalConsole::addBaudComboBoxConfig()
 {
@@ -184,8 +149,6 @@ void TerminalConsole::showEvent(QShowEvent *event)
     Q_UNUSED(event);
     // Start refresh Timer
     m_timer.start(2000);
-    if (!m_uas) MainWindow::instance()->toolBar().disableConnectWidget(true);
-    m_windowVisible = true;
 }
 
 void TerminalConsole::hideEvent(QHideEvent *event)
@@ -193,8 +156,6 @@ void TerminalConsole::hideEvent(QHideEvent *event)
     Q_UNUSED(event);
     // Stop the port list refeshing
     m_timer.stop();
-    MainWindow::instance()->toolBar().disableConnectWidget(false);
-    m_windowVisible = false;
 }
 
 TerminalConsole::~TerminalConsole()
@@ -442,20 +403,19 @@ void TerminalConsole::loadSettings()
     // Load defaults from settings
     QSettings settings;
     settings.sync();
-    if (settings.contains("TERMINALCONSOLE_COMM_PORT"))
+    settings.beginGroup("TERMINALCONSOLE");
+    if (settings.contains("COMM_PORT"))
     {
-        m_settings.name = settings.value("TERMINALCONSOLE_COMM_PORT").toString();
-        m_settings.baudRate = settings.value("TERMINALCONSOLE_COMM_BAUD").toInt();
+        m_settings.name = settings.value("COMM_PORT").toString();
+        m_settings.baudRate = settings.value("COMM_BAUD").toInt();
         m_settings.parity = static_cast<QSerialPort::Parity>
-                (settings.value("TERMINALCONSOLE_COMM_PARITY").toInt());
+                (settings.value("COMM_PARITY").toInt());
         m_settings.stopBits = static_cast<QSerialPort::StopBits>
-                (settings.value("TERMINALCONSOLE_COMM_STOPBITS").toInt());
+                (settings.value("COMM_STOPBITS").toInt());
         m_settings.dataBits = static_cast<QSerialPort::DataBits>
-                (settings.value("TERMINALCONSOLE_COMM_DATABITS").toInt());
+                (settings.value("COMM_DATABITS").toInt());
         m_settings.flowControl = static_cast<QSerialPort::FlowControl>
-                (settings.value("TERMINALCONSOLE_COMM_FLOW_CONTROL").toInt());
-    } else {
-        // init the structure
+                (settings.value("COMM_FLOW_CONTROL").toInt());
     }
 }
 
@@ -463,12 +423,14 @@ void TerminalConsole::writeSettings()
 {
     // Store settings
     QSettings settings;
-    settings.setValue("TERMINALCONSOLE_COMM_PORT", m_settings.name);
-    settings.setValue("TERMINALCONSOLE_COMM_BAUD", m_settings.baudRate);
-    settings.setValue("TERMINALCONSOLE_COMM_PARITY", m_settings.parity);
-    settings.setValue("TERMINALCONSOLE_COMM_STOPBITS", m_settings.stopBits);
-    settings.setValue("TERMINALCONSOLE_COMM_DATABITS", m_settings.dataBits);
-    settings.setValue("TERMINALCONSOLE_COMM_FLOW_CONTROL", m_settings.flowControl);
+    settings.beginGroup("TERMINALCONSOLE");
+    settings.setValue("COMM_PORT", m_settings.name);
+    settings.setValue("COMM_BAUD", m_settings.baudRate);
+    settings.setValue("COMM_PARITY", m_settings.parity);
+    settings.setValue("COMM_STOPBITS", m_settings.stopBits);
+    settings.setValue("COMM_DATABITS", m_settings.dataBits);
+    settings.setValue("COMM_FLOW_CONTROL", m_settings.flowControl);
+    settings.endGroup();
     settings.sync();
 }
 
