@@ -279,17 +279,10 @@ MacBuild | LinuxBuild {
 }
 
 #
-# EIGEN matrix library (NOMINMAX needed to make internal min/max work)
-#
-
-INCLUDEPATH += libs/eigen
-DEFINES += NOMINMAX
-
-#
 # AGLLIB math library
 #
 include(libs/alglib/alglib.pri)
-
+DEFINES += NOMINMAX
 #
 # OPMapControl library (from OpenPilot)
 #

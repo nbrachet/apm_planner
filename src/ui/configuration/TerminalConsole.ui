@@ -25,7 +25,20 @@
      <property name="title">
       <string>Terminal Output</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2"/>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="leftMargin">
+       <number>3</number>
+      </property>
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="rightMargin">
+       <number>3</number>
+      </property>
+      <property name="bottomMargin">
+       <number>3</number>
+      </property>
+     </layout>
     </widget>
    </item>
    <item>
@@ -33,41 +46,24 @@
      <property name="sizeConstraint">
       <enum>QLayout::SetMinimumSize</enum>
      </property>
-     <item alignment="Qt::AlignRight|Qt::AlignVCenter">
+     <item>
       <widget class="QPushButton" name="connectButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>100</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>135</width>
-         <height>0</height>
-        </size>
-       </property>
        <property name="text">
-        <string>CONNECT</string>
+        <string>Connect</string>
        </property>
       </widget>
      </item>
-     <item alignment="Qt::AlignRight">
+     <item>
       <widget class="QPushButton" name="disconnectButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>135</width>
-         <height>0</height>
-        </size>
-       </property>
        <property name="text">
-        <string>DISCONNECT</string>
+        <string>Disconnect</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="localEchoCheckBox">
+       <property name="text">
+        <string>Local Echo</string>
        </property>
       </widget>
      </item>
@@ -119,22 +115,6 @@
         </size>
        </property>
       </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="logToKmlButton">
-       <property name="minimumSize">
-        <size>
-         <width>135</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Pick a dataflash log file to generate a KML/KMZ file from</string>
-       </property>
-       <property name="text">
-        <string>Log to KML...</string>
-       </property>
-      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="logsButton">

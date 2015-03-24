@@ -20,9 +20,13 @@ import "./components"
 Rectangle {
     // Property Defintions
     id:root
+
+
     property bool enableBackgroundVideo: false
     property string statusMessage: ""
     property bool showStatusMessage: false
+
+
 
     function activeUasSet() {
         rollPitchIndicator.rollAngle = Qt.binding(function() { return relpositionoverview.roll})
@@ -56,7 +60,7 @@ Rectangle {
 
     RollPitchIndicator {
         id: rollPitchIndicator
-        anchors.centerIn: parent
+
         rollAngle: 0
         pitchAngle: 0
         enableBackgroundVideo: parent.enableBackgroundVideo

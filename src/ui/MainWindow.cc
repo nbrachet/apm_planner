@@ -370,12 +370,7 @@ MainWindow::MainWindow(QWidget *parent):
 
 MainWindow::~MainWindow()
 {
-    /*if (mavlink)
-    {
-        delete mavlink;
-        mavlink = NULL;
-    }*/
-
+    closeTerminalConsole();
 
     if (joystickWidget)
     {
@@ -620,7 +615,6 @@ void MainWindow::buildCommonWidgets()
         //engineeringView->setCentralWidget(new QGCDataPlot2D(this));
         plot = new AP2DataPlot2D(this);
         connect(logPlayer,SIGNAL(logLoaded()),plot,SLOT(clearGraph()));
-        plot->addSource(mavlinkDecoder);
         engineeringView->setCentralWidget(plot);
 
         addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
@@ -1835,43 +1829,6 @@ void MainWindow::addLink(int linkid)
     //connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
 }
 
-void MainWindow::addLink(LinkInterface *link)
-{
-    //This signal is fired when the connection manager adds a new link.
-    //Need to create a comms configuration window.
-
-    // IMPORTANT! KEEP THESE TWO LINES
-    // THEY MAKE SURE THE LINK IS PROPERLY REGISTERED
-    // BEFORE LINKING THE UI AGAINST IT
-    // Register (does nothing if already registered)
-    /*LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mavlink);
-
-    // Go fishing for this link's configuration window
-    QList<QAction*> actions = ui.menuNetwork->actions();
-
-    bool found(false);
-
-    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
-
-    foreach (QAction* act, actions)
-    {
-        if (act->data().toInt() == linkID)
-        { // LinkManager::instance()->getLinks().indexOf(link)
-            found = true;
-        }
-    }*/
-
-    /*CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, 0, NULL);
-    commsWidgetList.append(commWidget);
-    connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
-    QAction* action = commWidget->getAction();
-    ui.menuNetwork->addAction(action);
-
-    // Error handling
-    connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);*/
-}
 void MainWindow::linkError(int linkid,QString errorstring)
 {
     QMessageBox::information(this,"Link Error",errorstring);
@@ -1883,10 +1840,6 @@ void MainWindow::simulateLink(bool simulate) {
     simulationLink->connectLink(simulate);
 }
 
-//void MainWindow::configLink(LinkInterface *link)
-//{
-
-//}
 void MainWindow::commsWidgetDestroyed(QObject *obj)
 {
     if (commsWidgetList.contains(obj))
@@ -1931,16 +1884,8 @@ void MainWindow::UASSpecsChanged(int uas)
 void MainWindow::UASCreated(UASInterface* uas)
 {
 
-    // Check if this is the 2nd system and we need a switch menu
-    if (UASManager::instance()->getUASList().count() > 1)
-        //        ui.menuConnected_Systems->setEnabled(true);
-
-        // Connect the UAS to the full user interface
-
-        //if (uas != NULL)
-        //{
         // The pilot, operator and engineer views were not available on startup, enable them now
-        ui.actionFlightView->setEnabled(true);
+    ui.actionFlightView->setEnabled(true);
     ui.actionMissionView->setEnabled(true);
     ui.actionEngineersView->setEnabled(true);
     // The UAS actions are not enabled without connection to system
@@ -2113,15 +2058,6 @@ void MainWindow::UASDeleted(UASInterface* uas)
         //        ui.menuUnmanned_System->setTitle(tr("No System"));
         //        ui.menuUnmanned_System->setEnabled(false);
     }
-
-    //    QAction* act;
-    //    QList<QAction*> actions = ui.menuConnected_Systems->actions();
-
-    //    foreach (act, actions)
-    //    {
-    //        if (act->text().contains(uas->getUASName()))
-    //            ui.menuConnected_Systems->removeAction(act);
-    //    }
 }
 
 /**
@@ -2469,7 +2405,6 @@ void MainWindow::showTerminalConsole()
         vLayout->addWidget(terminalConsole);
         m_terminalDialog->resize(640,325);
         m_terminalDialog->show();
-        connect(engineeringView->centralWidget(), SIGNAL(toKMLClicked()), terminalConsole, SLOT(logToKmlClicked()));
         connect(m_terminalDialog, SIGNAL(finished(int)), this, SLOT(closeTerminalConsole()));
     }
 
@@ -2481,6 +2416,7 @@ void MainWindow::showTerminalConsole()
 void MainWindow::closeTerminalConsole()
 {
     if (m_terminalDialog){
+        m_terminalDialog->close();
         m_terminalDialog->deleteLater();
         m_terminalDialog = NULL;
     }

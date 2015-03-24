@@ -340,10 +340,22 @@ void Radio3DRConfig::localReadComplete(Radio3DREeprom& eeprom, bool success)
 
         setupFrequencyComboBox(*ui.minFreqComboBox, eeprom.frequencyCode());
         setupFrequencyComboBox(*ui.maxFreqComboBox, eeprom.frequencyCode());
+
+        int lowFreqIndex = ui.maxFreqComboBox->findData(eeprom.minFreq());
+        if (lowFreqIndex == -1){
+            ui.maxFreqComboBox->addItem(QString::number(eeprom.minFreq()), eeprom.minFreq());
+        }
         ui.minFreqComboBox->setCurrentIndex(ui.minFreqComboBox->findData(eeprom.minFreq()));
+
+        int highFreqIndex = ui.maxFreqComboBox->findData(eeprom.maxFreq());
+        if (highFreqIndex == -1){
+            ui.maxFreqComboBox->addItem(QString::number(eeprom.maxFreq()), eeprom.maxFreq());
+        }
         ui.maxFreqComboBox->setCurrentIndex(ui.maxFreqComboBox->findData(eeprom.maxFreq()));
 
         ui.maxWindowSpinBox->setValue(eeprom.maxWindow());
+
+        ui.rtsCtsComboBox->setCurrentIndex(ui.rtsCtsComboBox->findData(eeprom.rtsCts()));
 
     }
 }
@@ -387,12 +399,21 @@ void Radio3DRConfig::remoteReadComplete(Radio3DREeprom& eeprom, bool success)
         ui.lbtRssiSpinBox_remote->setValue(eeprom.lbtRssi());
         ui.numChannelsSpinBox_remote->setValue(eeprom.numChannels());
 
-        setupFrequencyComboBox(*ui.minFreqComboBox_remote, eeprom.frequencyCode());
-        setupFrequencyComboBox(*ui.maxFreqComboBox_remote, eeprom.frequencyCode());
+        int lowFreqIndex = ui.minFreqComboBox_remote->findData(eeprom.minFreq());
+        if (lowFreqIndex == -1){
+            ui.minFreqComboBox_remote->addItem(QString::number(eeprom.minFreq()), eeprom.minFreq());
+        }
         ui.minFreqComboBox_remote->setCurrentIndex(ui.minFreqComboBox_remote->findData(eeprom.minFreq()));
+
+        int highFreqIndex = ui.maxFreqComboBox_remote->findData(eeprom.maxFreq());
+        if (highFreqIndex == -1){
+            ui.maxFreqComboBox_remote->addItem(QString::number(eeprom.maxFreq()), eeprom.maxFreq());
+        }
         ui.maxFreqComboBox_remote->setCurrentIndex(ui.maxFreqComboBox_remote->findData(eeprom.maxFreq()));
 
         ui.maxWindowSpinBox_remote->setValue(eeprom.maxWindow());
+
+        ui.rtsCtsComboBox_remote->setCurrentIndex(ui.rtsCtsComboBox_remote->findData(eeprom.rtsCts()));
     }
 }
 
@@ -569,22 +590,22 @@ void Radio3DRConfig::setupFrequencyComboBox(QComboBox &comboBox, int freqCode )
     int freqStepSize;
 
     switch(freqCode){
-    case FREQ_915:
+    case Radio3DREeprom::FREQ_915:
         minFreq = 895000;
         maxFreq = 935000;
         freqStepSize = 1000;
         break;
-    case FREQ_433:
+    case Radio3DREeprom::FREQ_433:
         minFreq = 414000;
-        maxFreq = 454000;
-        freqStepSize = 100;
+        maxFreq = 460000;
+        freqStepSize = 50;
         break;
-    case FREQ_868:
+    case Radio3DREeprom::FREQ_868:
         minFreq = 849000;
         maxFreq = 889000;
         freqStepSize = 1000;
     default:
-        minFreq = 1;    // this supports RFD900 and RFD900A
+        minFreq = 1;    // this supports RFD900, RFD900A, RFD900U, RFD900P
         maxFreq = 30;
         freqStepSize = 1;
     }

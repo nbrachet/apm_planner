@@ -30,21 +30,25 @@ This file is part of the APM_PLANNER project
 #ifndef AP2DATAPLOT2D_H
 #define AP2DATAPLOT2D_H
 
-#include <QWidget>
-#include <QProgressDialog>
-#include "ui_AP2DataPlot2D.h"
-#include "AP2DataPlotThread.h"
-#include "dataselectionscreen.h"
-#include "qcustomplot.h"
 #include "UASInterface.h"
 #include "MAVLinkDecoder.h"
-#include "AP2DataPlotAxisDialog.h"
+#include "kmlcreator.h"
+#include "qcustomplot.h"
 #include "DroneshareUploadDialog.h"
+
+#include "AP2DataPlotThread.h"
+#include "dataselectionscreen.h"
+#include "AP2DataPlotAxisDialog.h"
+#include "AP2DataPlot2DModel.h"
+#include "ui_AP2DataPlot2D.h"
+
+#include <QWidget>
+#include <QProgressDialog>
+#include <QSortFilterProxyModel>
 #include <QTextBrowser>
 #include <QSqlDatabase>
 #include <QStandardItemModel>
-#include "AP2DataPlot2DModel.h"
-#include <QSortFilterProxyModel>
+
 class LogDownloadDialog;
 
 class AP2DataPlot2D : public QWidget
@@ -54,16 +58,14 @@ class AP2DataPlot2D : public QWidget
 public:
     explicit AP2DataPlot2D(QWidget *parent = 0,bool isIndependant = false);
     ~AP2DataPlot2D();
-    void addSource(MAVLinkDecoder *decoder);
     void loadLog(QString filename);
-
-signals:
-    void toKMLClicked();
 
 public slots:
     void showLogDownloadDialog();
     void closeLogDownloadDialog();
     void clearGraph();
+
+    void logToKmlClicked();
 
 private slots:
     //New Active UAS set
@@ -123,6 +125,7 @@ private slots:
     void exportDialogAccepted();
 
     void graphGroupingChanged(QList<AP2DataPlotAxisDialog::GraphRange> graphRangeList);
+    void graphColorsChanged(QMap<QString,QColor> colormap);
     void selectedRowChanged(QModelIndex current,QModelIndex previous);
 
     void modeCheckBoxClicked(bool checked);
@@ -136,6 +139,8 @@ private slots:
     void sortSelectInvertClicked();
 
     void childGraphDestroyed(QObject *obj);
+
+    void setExcelViewHidden(bool hidden);
 
 private:
     void showEvent(QShowEvent *evt);
@@ -190,7 +195,7 @@ private:
     QCustomPlot *m_plot;
     QCPAxisRect *m_wideAxisRect;
     AP2DataPlotThread *m_logLoaderThread;
-    DataSelectionScreen *m_dataSelectionScreen;
+    //DataSelectionScreen *m_dataSelectionScreen;
     QStandardItemModel *m_model;
     bool m_logLoaded;
     //Current "index", X axis on graph. Used to keep all the graphs lined up.

@@ -58,7 +58,6 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent,bool isIndependant) : QWidget(paren
     m_plot(NULL),
     m_wideAxisRect(NULL),
     m_logLoaderThread(NULL),
-    m_dataSelectionScreen(NULL),
     m_model(NULL),
     m_logLoaded(false),
     m_currentIndex(0),
@@ -83,6 +82,7 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent,bool isIndependant) : QWidget(paren
     connect(ui.sortInvertSelectPushButton,SIGNAL(clicked()),this,SLOT(sortSelectInvertClicked()));
     ui.tableSortGroupBox->setVisible(false);
     ui.sortShowPushButton->setVisible(false);
+    ui.exportPushButton->setVisible(false);
 
     QDateTime utc = QDateTime::currentDateTimeUtc();
     utc.setTimeSpec(Qt::LocalTime);
@@ -121,10 +121,9 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent,bool isIndependant) : QWidget(paren
     QCPMarginGroup *marginGroup = new QCPMarginGroup(m_plot);
     m_wideAxisRect->setMarginGroup(QCP::msLeft | QCP::msRight, marginGroup);
 
-    m_dataSelectionScreen = new DataSelectionScreen(this);
-    connect( m_dataSelectionScreen,SIGNAL(itemEnabled(QString)),this,SLOT(itemEnabled(QString)));
-    connect( m_dataSelectionScreen,SIGNAL(itemDisabled(QString)),this,SLOT(itemDisabled(QString)));
-    ui.horizontalLayout_3->addWidget(m_dataSelectionScreen);
+    //m_dataSelectionScreen = new DataSelectionScreen(this);
+    connect(ui.dataSelectionScreen,SIGNAL(itemEnabled(QString)),this,SLOT(itemEnabled(QString)));
+    connect( ui.dataSelectionScreen,SIGNAL(itemDisabled(QString)),this,SLOT(itemDisabled(QString)));
 
     ui.horizontalLayout_3->setStretch(0,5);
     ui.horizontalLayout_3->setStretch(1,1);
@@ -141,18 +140,20 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent,bool isIndependant) : QWidget(paren
     ui.tableWidget->addAction(m_addGraphAction);
     connect(m_addGraphAction,SIGNAL(triggered()),this,SLOT(addGraphLeft()));
 
-    ui.tableWidget->setVisible(false);
+    //ui.tableWidget->setVisible(false);
+    setExcelViewHidden(true);
     ui.tableWidget->verticalHeader()->setDefaultSectionSize(ui.tableWidget->fontMetrics().height() + ROW_HEIGHT_PADDING);
     ui.hideExcelView->setVisible(false);
 
     connect(ui.loadOfflineLogButton,SIGNAL(clicked()),this,SLOT(loadButtonClicked()));
     connect(ui.autoScrollCheckBox,SIGNAL(clicked(bool)),this,SLOT(autoScrollClicked(bool)));
-    connect(ui.hideExcelView,SIGNAL(clicked(bool)),ui.tableWidget,SLOT(setHidden(bool)));
+    //connect(ui.hideExcelView,SIGNAL(clicked(bool)),ui.tableWidget,SLOT(setHidden(bool)));
+    connect(ui.hideExcelView,SIGNAL(clicked(bool)),this,SLOT(setExcelViewHidden(bool)));
     connect(ui.tableWidget,SIGNAL(currentCellChanged(int,int,int,int)),this,SLOT(tableCellChanged(int,int,int,int)));
 
     connect(ui.graphControlsPushButton,SIGNAL(clicked()),this,SLOT(graphControlsButtonClicked()));
     m_model = new QStandardItemModel();
-    connect(ui.toKMLPushButton, SIGNAL(clicked()), this, SIGNAL(toKMLClicked()));
+    connect(ui.toKMLPushButton, SIGNAL(clicked()), this, SLOT(logToKmlClicked()));
     connect(ui.horizontalScrollBar,SIGNAL(sliderMoved(int)),this,SLOT(horizontalScrollMoved(int)));
 
     connect(ui.horizontalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(horizontalScrollMoved(int)));
@@ -167,14 +168,34 @@ AP2DataPlot2D::AP2DataPlot2D(QWidget *parent,bool isIndependant) : QWidget(paren
     connect(ui.droneshareButton, SIGNAL(clicked()), this, SLOT(droneshareButtonClicked()));
     connect(ui.exportPushButton,SIGNAL(clicked()),this,SLOT(exportButtonClicked()));
 
-    //m_sharedDb = QSqlDatabase::addDatabase("QSQLITE");
-    //m_sharedDb.setDatabaseName(":memory:");
-    //if (!m_sharedDb.open())
-    //{
-    //    QMessageBox::information(0,"error","Error opening shared database " + m_sharedDb.lastError().text());
-    //    return;
-    //}
+    ui.horizontalSplitter->setStretchFactor(0,20);
+    ui.horizontalSplitter->setStretchFactor(1,1);
+
 }
+void AP2DataPlot2D::setExcelViewHidden(bool hidden)
+{
+    if (hidden)
+    {
+        ui.splitter->setSizes(QList<int>() << 1 << 0);
+        ui.sortShowPushButton->setVisible(false);
+    }
+    else
+    {
+        ui.splitter->setSizes(QList<int>() << 1 << 1);
+        ui.sortShowPushButton->setVisible(true);
+    }
+}
+void AP2DataPlot2D::graphColorsChanged(QMap<QString,QColor> colormap)
+{
+    for (QMap<QString,QColor>::const_iterator i = colormap.constBegin();i!=colormap.constEnd();i++)
+    {
+        m_graphClassMap[i.key()].graph->setPen(QPen(i.value()));
+        m_graphClassMap[i.key()].axis->setLabelColor(i.value());
+        m_graphClassMap[i.key()].axis->setTickLabelColor(i.value());
+        m_graphClassMap[i.key()].axis->setTickLabelColor(i.value());
+    }
+}
+
 void AP2DataPlot2D::graphGroupingChanged(QList<AP2DataPlotAxisDialog::GraphRange> graphRangeList)
 {
     for (QMap<QString,Graph>::const_iterator i=m_graphClassMap.constBegin();i!=m_graphClassMap.constEnd();i++)
@@ -284,6 +305,7 @@ void AP2DataPlot2D::showEvent(QShowEvent *evt)
     m_updateTimer = new QTimer(this);
     connect(m_updateTimer,SIGNAL(timeout()),m_plot,SLOT(replot()));
     m_updateTimer->start(500);
+    QWidget::showEvent(evt);
 }
 
 void AP2DataPlot2D::hideEvent(QHideEvent *evt)
@@ -294,6 +316,7 @@ void AP2DataPlot2D::hideEvent(QHideEvent *evt)
         m_updateTimer->deleteLater();
         m_updateTimer = 0;
     }
+    QWidget::hideEvent(evt);
 }
 
 void AP2DataPlot2D::verticalScrollMoved(int value)
@@ -384,6 +407,9 @@ void AP2DataPlot2D::plotMouseMove(QMouseEvent *evt)
 
 void AP2DataPlot2D::axisDoubleClick(QCPAxis* axis,QCPAxis::SelectablePart part,QMouseEvent* evt)
 {
+    Q_UNUSED(axis)
+    Q_UNUSED(part)
+    Q_UNUSED(evt)
     graphControlsButtonClicked();
 }
 void AP2DataPlot2D::graphControlsButtonClicked()
@@ -398,15 +424,22 @@ void AP2DataPlot2D::graphControlsButtonClicked()
         for (QMap<QString,Graph>::const_iterator i=m_graphClassMap.constBegin();i!=m_graphClassMap.constEnd();i++)
         {
             //m_axisGroupingDialog->addAxis(i.key(),i.value().axis->range().lower,i.value().axis->range().upper,i.value().axis->labelColor());
-            m_axisGroupingDialog->fullAxisUpdate(i.key(),i.value().axis->range().lower,i.value().axis->range().upper,i.value().isManualRange,i.value().isInGroup,i.value().groupName);
+            if (!i.key().toLower().contains("mode"))
+            {
+                m_axisGroupingDialog->fullAxisUpdate(i.key(),i.value().axis->range().lower,i.value().axis->range().upper,i.value().isManualRange,i.value().isInGroup,i.value().groupName);
+            }
         }
         return;
     }
     m_axisGroupingDialog = new AP2DataPlotAxisDialog();
     connect(m_axisGroupingDialog,SIGNAL(graphGroupingChanged(QList<AP2DataPlotAxisDialog::GraphRange>)),this,SLOT(graphGroupingChanged(QList<AP2DataPlotAxisDialog::GraphRange>)));
+    connect(m_axisGroupingDialog,SIGNAL(graphColorsChanged(QMap<QString,QColor>)),this,SLOT(graphColorsChanged(QMap<QString,QColor>)));
     for (QMap<QString,Graph>::const_iterator i=m_graphClassMap.constBegin();i!=m_graphClassMap.constEnd();i++)
     {
-        m_axisGroupingDialog->addAxis(i.key(),i.value().axis->range().lower,i.value().axis->range().upper,i.value().axis->labelColor());
+        if (!i.key().toLower().contains("mode"))
+        {
+            m_axisGroupingDialog->addAxis(i.key(),i.value().axis->range().lower,i.value().axis->range().upper,i.value().axis->labelColor());
+        }
     }
     m_axisGroupingDialog->show();
     QApplication::postEvent(m_axisGroupingDialog, new QEvent(QEvent::Show));
@@ -424,7 +457,7 @@ void AP2DataPlot2D::addGraphLeft()
 
     QString itemtext = ui.tableWidget->model()->itemData(ui.tableWidget->model()->index(ui.tableWidget->selectionModel()->selectedIndexes().at(0).row(),1)).value(Qt::DisplayRole).toString();
     QString headertext = ui.tableWidget->model()->headerData(ui.tableWidget->selectionModel()->selectedIndexes().at(0).column(),Qt::Horizontal,Qt::DisplayRole).toString();
-    m_dataSelectionScreen->enableItem(itemtext + "." + headertext);
+    ui.dataSelectionScreen->enableItem(itemtext + "." + headertext);
     //Whenever we add a graph, make the button a remove, since there is no selectedItemChanged signal if they re-click it
     //It's an enabled
     m_addGraphAction->setText("Remove From Graph");
@@ -500,7 +533,7 @@ void AP2DataPlot2D::removeGraphLeft()
     QString itemtext = ui.tableWidget->model()->itemData(ui.tableWidget->model()->index(ui.tableWidget->selectionModel()->selectedIndexes().at(0).row(),1)).value(Qt::DisplayRole).toString();
     QString headertext = ui.tableWidget->model()->headerData(ui.tableWidget->selectionModel()->selectedIndexes().at(0).column(),Qt::Horizontal,Qt::DisplayRole).toString();
     QString label = itemtext + "." + headertext;
-    m_dataSelectionScreen->disableItem(itemtext + "." + headertext);
+    ui.dataSelectionScreen->disableItem(itemtext + "." + headertext);
     m_addGraphAction->setText("Add To Graph");
     disconnect(m_addGraphAction,SIGNAL(triggered()),this,SLOT(addGraphLeft())); //Disconnect from everything
     disconnect(m_addGraphAction,SIGNAL(triggered()),this,SLOT(removeGraphLeft())); //Disconnect from everything
@@ -581,10 +614,6 @@ void AP2DataPlot2D::disconnected()
      ui.downloadPushButton->setEnabled(false);
 }
 
-void AP2DataPlot2D::addSource(MAVLinkDecoder *decoder)
-{
-    //connect(decoder,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
-}
 void AP2DataPlot2D::navModeChanged(int uasid, int mode, const QString& text)
 {
     Q_UNUSED(mode);
@@ -622,7 +651,7 @@ void AP2DataPlot2D::navModeChanged(int uasid, int mode, const QString& text)
         QCPGraph *mainGraph1 = m_plot->addGraph(m_wideAxisRect->axis(QCPAxis::atBottom), m_wideAxisRect->axis(QCPAxis::atLeft,m_graphCount++));
         m_graphNameList.append("MODE");
 
-        mainGraph1->setPen(QPen(color, 2));
+        mainGraph1->setPen(QPen(color, 1));
         Graph graph;
         graph.axis = axis;
         graph.groupName = "";
@@ -660,7 +689,7 @@ void AP2DataPlot2D::updateValue(const int uasId, const QString& name, const QStr
     QString propername  = name.mid(name.indexOf(":")+1);
     if (!m_onlineValueMap.contains(propername))
     {
-        m_dataSelectionScreen->addItem(propername);
+        ui.dataSelectionScreen->addItem(propername);
     }
 
 
@@ -792,7 +821,7 @@ void AP2DataPlot2D::loadLog(QString filename)
         m_wideAxisRect->removeAxis(m_graphClassMap.value(m_graphNameList[i]).axis);
         m_plot->removeGraph(m_graphClassMap.value(m_graphNameList[i]).graph);
     }
-    m_dataSelectionScreen->clear();
+    ui.dataSelectionScreen->clear();
     if (m_axisGroupingDialog)
     {
         m_axisGroupingDialog->clear();
@@ -804,6 +833,8 @@ void AP2DataPlot2D::loadLog(QString filename)
 
     QString shortfilename =filename.mid(filename.lastIndexOf("/")+1);
     setWindowTitle(tr("Graph: %1").arg(shortfilename));
+    ui.toKMLPushButton->setDisabled(true);
+    ui.exportPushButton->setVisible(true);
 
     m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setTickLabelType(QCPAxis::ltNumber);
     m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100);
@@ -875,6 +906,13 @@ void AP2DataPlot2D::itemEnabled(QString name)
         QVector<double> xlist;
         QVector<double> ylist;
         QMap<quint64,QVariant> values = m_tableModel->getValues(parent,child);
+        if (values.size() == 0)
+        {
+            //No values!
+            m_graphCount++; //Prevent crash when it tries to disable
+            ui.dataSelectionScreen->disableItem(name);
+            return;
+        }
         for (QMap<quint64,QVariant>::const_iterator i = values.constBegin();i!=values.constEnd();i++)
         {
             if (i.value().type() == QVariant::String)
@@ -909,9 +947,12 @@ void AP2DataPlot2D::itemEnabled(QString name)
 
         if (m_axisGroupingDialog)
         {
-            m_axisGroupingDialog->addAxis(name,axis->range().lower,axis->range().upper,color);
+            if (!name.toLower().contains("mode"))
+            {
+                m_axisGroupingDialog->addAxis(name,axis->range().lower,axis->range().upper,color);
+            }
         }
-        mainGraph1->setPen(QPen(color, 2));
+        mainGraph1->setPen(QPen(color, 1));
         Graph graph;
         graph.axis = axis;
         graph.groupName = "";
@@ -997,7 +1038,10 @@ void AP2DataPlot2D::itemEnabled(QString name)
             }
             if (m_axisGroupingDialog)
             {
-                m_axisGroupingDialog->addAxis(name,axis->range().lower,axis->range().upper,color);
+                if (!name.toLower().contains("mode"))
+                {
+                    m_axisGroupingDialog->addAxis(name,axis->range().lower,axis->range().upper,color);
+                }
             }
             Graph graph;
             graph.axis = axis;
@@ -1007,7 +1051,7 @@ void AP2DataPlot2D::itemEnabled(QString name)
             graph.isManualRange = false;
             m_graphClassMap[name] = graph;
 
-            mainGraph1->setPen(QPen(color, 2));
+            mainGraph1->setPen(QPen(color, 1));
         }
     }
 }
@@ -1037,6 +1081,7 @@ void AP2DataPlot2D::itemDisabled(QString name)
 void AP2DataPlot2D::progressDialogCanceled()
 {
     m_logLoaderThread->stopLoad();
+    this->close();
 }
 void AP2DataPlot2D::clearGraph()
 {
@@ -1046,7 +1091,7 @@ void AP2DataPlot2D::clearGraph()
         m_wideAxisRect->removeAxis(m_graphClassMap.value(m_graphNameList[i]).axis);
         m_plot->removeGraph(m_graphClassMap.value(m_graphNameList[i]).graph);
     }
-    m_dataSelectionScreen->clear();
+    ui.dataSelectionScreen->clear();
     if (m_axisGroupingDialog)
     {
         m_axisGroupingDialog->clear();
@@ -1063,7 +1108,8 @@ void AP2DataPlot2D::clearGraph()
         ui.loadOfflineLogButton->setText("Open Log");
         ui.hideExcelView->setVisible(false);
         ui.hideExcelView->setChecked(false);
-        ui.tableWidget->setVisible(false);
+        //ui.tableWidget->setVisible(false);
+        setExcelViewHidden(true);
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setTickLabelType(QCPAxis::ltDateTime);
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setDateTimeFormat("hh:mm:ss");
         m_wideAxisRect->axis(QCPAxis::atBottom, 0)->setRange(0,100); //Default range of 0-100 milliseconds?
@@ -1076,7 +1122,8 @@ void AP2DataPlot2D::clearGraph()
 
 void AP2DataPlot2D::loadStarted()
 {
-    m_progressDialog = new QProgressDialog("Loading File","Cancel",0,100);
+    m_progressDialog = new QProgressDialog("Loading File","Cancel",0,100,this);
+    m_progressDialog->setWindowModality(Qt::WindowModal);
     connect(m_progressDialog,SIGNAL(canceled()),this,SLOT(progressDialogCanceled()));
     m_progressDialog->show();
     QApplication::processEvents();
@@ -1135,82 +1182,31 @@ void AP2DataPlot2D::plotTextArrow(int index, const QString &text, const QString&
 void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
 {
     m_loadedLogMavType = type;
-    //if (!m_sharedDb.isOpen())
-    //{
-        /*if (!m_sharedDb.open())
-        {
-            //emit error("Unable to open database: " + m_sharedDb.lastError().text());
-            QMessageBox::information(0,"Error","Error opening DB");
-            return;
-        }*/
-    //}
+
     if (errors != 0)
     {
         QMessageBox::information(this,"Warning","There were errors countered with " + QString::number(errors) + " lines in the log file. The data is potentially corrupt and incorrect");
     }
-    //fmttablecreate.prepare("CREATE TABLE 'FMT' (index integer PRIMARY KEY,typeid integer, length integer,name varchar(200),format varchar(6000));");
+
+
+    m_scrollStartIndex = m_tableModel->getFirstIndex();
+    m_scrollEndIndex = m_tableModel->getLastIndex();
+    ui.horizontalScrollBar->setMinimum(m_scrollStartIndex);
+    ui.horizontalScrollBar->setMaximum(m_scrollEndIndex);
+
     QMap<QString,QList<QString> > fmtlist = m_tableModel->getFmtValues();
     for (QMap<QString,QList<QString> >::const_iterator i=fmtlist.constBegin();i!=fmtlist.constEnd();i++)
     {
         QString name = i.key();
         for (int j=0;j<i.value().size();j++)
         {
-            m_dataSelectionScreen->addItem(name + "." + i.value().at(j));
+            ui.dataSelectionScreen->addItem(name + "." + i.value().at(j));
         }
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
         child->setFlags(child->flags() | Qt::ItemIsUserCheckable);
         child->setCheckState(0,Qt::Checked); // Set it checked, since all items are enabled by default
         ui.sortSelectTreeWidget->addTopLevelItem(child);
-        //QLOG_DEBUG() << record.value(0) << record.value(1) << record.value(2) << record.value(3) << record.value(4) << record.value(5);
-        //rowlist.clear();
-        //itemquery.prepare("SELECT * FROM '" + name + "';");
-        //itemquery.exec();
-        //while (itemquery.next())
-        //{
-
-        //}
-        //QString linename = name;
-        //QString lastformat = vars;
-        //m_tableHeaderNameMap[linename] = lastformat.trimmed();
     }
-
-    /*QSqlQuery fmtquery(m_sharedDb);
-    fmtquery.prepare("SELECT * FROM 'FMT';");
-    if (!fmtquery.exec())
-    {
-        QMessageBox::information(0,"Error","Error selecting from table 'FMT' " + m_sharedDb.lastError().text());
-        return;
-
-    }
-    //QSqlQuery itemquery(m_sharedDb);
-
-    while (fmtquery.next())
-    {
-        QSqlRecord record = fmtquery.record();
-        QString name = record.value(3).toString();
-        QString vars = record.value(5).toString();
-        QStringList varssplit = vars.split(",");
-        for (int i=0;i<varssplit.size();i++)
-        {
-            m_dataSelectionScreen->addItem(name + "." + varssplit.at(i));
-        }
-        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
-        child->setFlags(child->flags() | Qt::ItemIsUserCheckable);
-        child->setCheckState(0,Qt::Checked); // Set it checked, since all items are enabled by default
-        ui.sortSelectTreeWidget->addTopLevelItem(child);
-        QLOG_DEBUG() << record.value(0) << record.value(1) << record.value(2) << record.value(3) << record.value(4) << record.value(5);
-        //rowlist.clear();
-        //itemquery.prepare("SELECT * FROM '" + name + "';");
-        //itemquery.exec();
-        //while (itemquery.next())
-        //{
-
-        //}
-        QString linename = name;
-        QString lastformat = vars;
-        m_tableHeaderNameMap[linename] = lastformat.trimmed();
-    }*/
-
 
     QMap<quint64,QString> modes = m_tableModel->getModeValues();
     if (modes.size() == 0)
@@ -1236,7 +1232,7 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
             QCPGraph *mainGraph1 = m_plot->addGraph(m_wideAxisRect->axis(QCPAxis::atBottom), m_wideAxisRect->axis(QCPAxis::atLeft,m_graphCount++));
             m_graphNameList.append("MODE");
 
-            mainGraph1->setPen(QPen(color, 2));
+            mainGraph1->setPen(QPen(color, 1));
             Graph graph;
             graph.axis = axis;
             graph.groupName = "";
@@ -1288,218 +1284,7 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
             m_graphClassMap["MODE"].modeMap[index] = mode;
         }
     }
-    /*
-    QSqlQuery modequery(m_sharedDb);
-    modequery.prepare("SELECT * FROM 'MODE';");
-    if (!modequery.exec())
-    {
-        //No mode?
-        QLOG_DEBUG() << "Graph loaded with no mode table. Running anyway, but text modes will not be available";
-    }
-    else
-    {
-        if (!m_graphClassMap.contains("MODE"))
-        {
-            QCPAxis *axis = m_wideAxisRect->addAxis(QCPAxis::atLeft);
-            axis->setVisible(false);
-            axis->setLabel("MODE");
-
-            if (m_graphCount > 0)
-            {
-                connect(m_wideAxisRect->axis(QCPAxis::atLeft,0),SIGNAL(rangeChanged(QCPRange)),axis,SLOT(setRange(QCPRange)));
-            }
-            QColor color = QColor::fromRgb(rand()%255,rand()%255,rand()%255);
-            axis->setLabelColor(color);
-            axis->setTickLabelColor(color);
-            axis->setTickLabelColor(color); // add an extra axis on the left and color its numbers
-            QCPGraph *mainGraph1 = m_plot->addGraph(m_wideAxisRect->axis(QCPAxis::atBottom), m_wideAxisRect->axis(QCPAxis::atLeft,m_graphCount++));
-            m_graphNameList.append("MODE");
-
-            mainGraph1->setPen(QPen(color, 2));
-            Graph graph;
-            graph.axis = axis;
-            graph.groupName = "";
-            graph.graph=  mainGraph1;
-            graph.isInGroup = false;
-            graph.isManualRange = false;
-            m_graphClassMap["MODE"] = graph;
-
-            mainGraph1->rescaleValueAxis();
-            if (m_graphCount == 1)
-            {
-                mainGraph1->rescaleKeyAxis();
-            }
-        }
-        while (modequery.next())
-        {
-            QSqlRecord record = modequery.record();
-            int index = record.value(0).toInt();
-            QString mode = "";
-            if (record.contains("Mode"))
-            {
-                mode = record.value("Mode").toString();
-            }
-            bool ok = false;
-            int modeint = mode.toInt(&ok);
-            if (!ok)
-            {
-                if (record.contains("ModeNum"))
-                {
-                    modeint = record.value("ModeNum").toString().toInt();
-                }
-                else
-                {
-                    QLOG_DEBUG() << "Unable to determine Mode number in log" << record.value("Mode").toString();
-                }
-            }
-            else
-            {
-                //It's an integer!
-                switch (type)
-                {
-                    case MAV_TYPE_QUADROTOR:
-                    {
-                        mode = ApmCopter::stringForMode(modeint);
-                    }
-                    break;
-                    case MAV_TYPE_FIXED_WING:
-                    {
-                        mode = ApmPlane::stringForMode(modeint);
-                    }
-                    break;
-                    case MAV_TYPE_GROUND_ROVER:
-                    {
-                        mode = ApmRover::stringForMode(modeint);
-                    }
-                    break;
-                }
-            }
-            QLOG_DEBUG() << "Mode change at index" << index << "to" << mode;
-            plotTextArrow(index, mode, "MODE",ui.modeDisplayCheckBox);
-            m_graphClassMap["MODE"].modeMap[index] = mode;
-        }
-    }*/
-
-    /*QSqlQuery errquery(m_sharedDb);
-    errquery.prepare("SELECT * FROM 'ERR';");
-    if (!errquery.exec())
-    {
-        //No err?
-        QLOG_DEBUG() << "Graph loaded with no err table. Running anyway, but text errors will not be available";
-    }
-    else
-    {
-        if (!m_graphClassMap.contains("ERR"))
-        {
-            QCPAxis *axis = m_wideAxisRect->addAxis(QCPAxis::atLeft);
-            axis->setVisible(false);
-            axis->setLabel("ERR");
-
-            if (m_graphCount > 0)
-            {
-                connect(m_wideAxisRect->axis(QCPAxis::atLeft,0),SIGNAL(rangeChanged(QCPRange)),axis,SLOT(setRange(QCPRange)));
-            }
-            QColor color = QColor::fromRgb(rand()%255,rand()%255,rand()%255);
-            axis->setLabelColor(color);
-            axis->setTickLabelColor(color);
-            axis->setTickLabelColor(color); // add an extra axis on the left and color its numbers
-            QCPGraph *mainGraph1 = m_plot->addGraph(m_wideAxisRect->axis(QCPAxis::atBottom), m_wideAxisRect->axis(QCPAxis::atLeft,m_graphCount++));
-            m_graphNameList.append("ERR");
-
-            mainGraph1->setPen(QPen(color, 2));
-            Graph graph;
-            graph.axis = axis;
-            graph.groupName = "";
-            graph.graph=  mainGraph1;
-            graph.isInGroup = false;
-            graph.isManualRange = false;
-            m_graphClassMap["ERR"] = graph;
-
-            mainGraph1->rescaleValueAxis();
-            if (m_graphCount == 1)
-            {
-                mainGraph1->rescaleKeyAxis();
-            }
-        }
-        while (errquery.next())
-        {
-            QSqlRecord record = errquery.record();
-            int index = record.value(0).toInt();
-            int ecode = -1;
-            int subsys = -1;
-            if (record.contains("ECode"))
-            {
-                ecode = record.value("ECode").toString().toInt();
-            }
-            if (record.contains("Subsys"))
-            {
-                subsys = record.value("Subsys").toString().toInt();
-            }
-            QPair<QString,QString> errortext = ArduPilotMegaMAV::getErrText(subsys,ecode);
-            plotTextArrow(index, errortext.first + "\n" + errortext.second, "ERR",ui.errDisplayCheckBox);
-
-        }
-    }*/
-
-
-
-    /*QSqlQuery evquery(m_sharedDb);
-    evquery.prepare("SELECT * FROM 'EV';");
-    if (!evquery.exec())
-    {
-        //No err?
-        QLOG_DEBUG() << "Graph loaded with no err table. Running anyway, but text errors will not be available";
-    }
-    else
-    {
-        if (!m_graphClassMap.contains("EV"))
-        {
-            QCPAxis *axis = m_wideAxisRect->addAxis(QCPAxis::atLeft);
-            axis->setVisible(false);
-            axis->setLabel("EV");
-
-            if (m_graphCount > 0)
-            {
-                connect(m_wideAxisRect->axis(QCPAxis::atLeft,0),SIGNAL(rangeChanged(QCPRange)),axis,SLOT(setRange(QCPRange)));
-            }
-            QColor color = QColor::fromRgb(rand()%255,rand()%255,rand()%255);
-            axis->setLabelColor(color);
-            axis->setTickLabelColor(color);
-            axis->setTickLabelColor(color); // add an extra axis on the left and color its numbers
-            QCPGraph *mainGraph1 = m_plot->addGraph(m_wideAxisRect->axis(QCPAxis::atBottom), m_wideAxisRect->axis(QCPAxis::atLeft,m_graphCount++));
-            m_graphNameList.append("EV");
-
-            mainGraph1->setPen(QPen(color, 2));
-            Graph graph;
-            graph.axis = axis;
-            graph.groupName = "";
-            graph.graph=  mainGraph1;
-            graph.isInGroup = false;
-            graph.isManualRange = false;
-            m_graphClassMap["EV"] = graph;
-
-            mainGraph1->rescaleValueAxis();
-            if (m_graphCount == 1)
-            {
-                mainGraph1->rescaleKeyAxis();
-            }
-        }
-        while (evquery.next())
-        {
-            QSqlRecord record = evquery.record();
-            int index = record.value(0).toInt();
-            int ecode = -1;
-            QString ecodestring = "UNKNOWN";
-            if (record.contains("Id"))
-            {
-                ecode = record.value("Id").toString().toInt();
-            }
-            ecodestring = ArduPilotMegaMAV::getNameFromEventId(ecode);
-
-            //QLOG_DEBUG() << "Mode change at index" << index << "to" << mode;
-            plotTextArrow(index, ecodestring, "EV",ui.evDisplayCheckBox);
-        }
-    }*/
+    ui.verticalScrollBar->setValue(ui.verticalScrollBar->maximum());
 
     //m_tableModel = new AP2DataPlot2DModel(&m_sharedDb,this);
     m_tableFilterProxyModel = new QSortFilterProxyModel(this);
@@ -1507,15 +1292,13 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
     ui.tableWidget->setModel(m_tableFilterProxyModel);
     connect(ui.tableWidget->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),this,SLOT(selectedRowChanged(QModelIndex,QModelIndex)));
 
-    m_scrollStartIndex = m_tableModel->getFirstIndex();
-    m_scrollEndIndex = m_tableModel->getLastIndex();
-    ui.horizontalScrollBar->setMinimum(m_scrollStartIndex);
-    ui.horizontalScrollBar->setMaximum(m_scrollEndIndex);
+
 
     m_progressDialog->hide();
     delete m_progressDialog;
     m_progressDialog=0;
-    ui.tableWidget->setVisible(true);
+    //ui.tableWidget->setVisible(true);
+    setExcelViewHidden(false);
     ui.hideExcelView->setVisible(true);
     ui.sortShowPushButton->setVisible(true);
 }
@@ -1527,7 +1310,7 @@ void AP2DataPlot2D::threadError(QString errorstr)
     m_progressDialog->hide();
     delete m_progressDialog;
     m_progressDialog=0;
-    m_dataSelectionScreen->clear();
+    ui.dataSelectionScreen->clear();
     m_dataList.clear();
 }
 
@@ -1562,7 +1345,7 @@ void AP2DataPlot2D::closeLogDownloadDialog()
 
 void AP2DataPlot2D::droneshareButtonClicked()
 {
-    if(m_droneshareUploadDialog){
+    if(!m_droneshareUploadDialog){
         m_droneshareUploadDialog = new DroneshareUploadDialog();
     }
     m_droneshareUploadDialog->show();
@@ -1613,16 +1396,18 @@ void AP2DataPlot2D::exportDialogAccepted()
         return;
     }
     QString outputFileName = dialog->selectedFiles().at(0);
+    dialog->close();
+
     QFile outputfile(outputFileName);
     if (!outputfile.open(QIODevice::ReadWrite | QIODevice::Truncate))
     {
         QMessageBox::information(this,"Error","Unable to open output file: " + outputfile.errorString());
         return;
     }
-    QProgressDialog *progressDialog = new QProgressDialog("Saving File","Cancel",0,100);
+    QProgressDialog *progressDialog = new QProgressDialog("Exporting File","Cancel",0,100,this);
+    progressDialog->setWindowModality(Qt::WindowModal);
     progressDialog->show();
     QApplication::processEvents();
-
 
     QString formatheader = "FMT, 128, 89, FMT, BBnNZ, Type,Length,Name,Format\r\n";
     QMap<QString,QList<QString> > fmtlist = m_tableModel->getFmtValues();
@@ -1635,7 +1420,6 @@ void AP2DataPlot2D::exportDialogAccepted()
             formatheader += line + "\r\n";
         }
     }
-
 
     outputfile.write(formatheader.toLatin1());
 
@@ -1656,91 +1440,17 @@ void AP2DataPlot2D::exportDialogAccepted()
             progressDialog->setValue(100.0 * ((double)i / (double)m_tableModel->rowCount()));
         }
         QApplication::processEvents();
-    }
-
-
-/*
-    //Iterate through the index table to build the actual log
-    QSqlQuery indexquery(m_sharedDb);
-    indexquery.prepare("SELECT * FROM 'INDEX';");
-    if (!indexquery.exec())
-    {
-        QMessageBox::information(0,"Error","Error selecting from table 'INDEX' " + m_sharedDb.lastError().text());
-        return;
-
-    }
-
-    outputfile.write(formatheader.toLatin1());
-
-    int count = 0;
-    indexquery.last();
-    int indexrows = indexquery.record().value(0).toInt();
-    indexquery.first();
-    indexquery.previous();
-    while (indexquery.next())
-    {
-        if (progressDialog->isHidden())
+        if (progressDialog->wasCanceled())
         {
-            //Cancel has been clicked
             outputfile.close();
-            if (!QFile::remove(outputfile.fileName()))
-            {
-                QMessageBox::information(0,"Warning","Log save canceled. There may be an incomplete log in the save folder, as AP2 was unable to delete it.");
-            }
-            else
-            {
-                QMessageBox::information(0,"Warning","Log save canceled");
-            }
+            progressDialog->hide();
             progressDialog->deleteLater();
             progressDialog=NULL;
+            QMessageBox::information(0,"Warning","Export was canceled");
             return;
         }
-        progressDialog->setValue(100.0 * ((double)count++ / (double)indexrows));
-
-
-        QSqlRecord record = indexquery.record();
-        int index = record.value(0).toInt();
-        QString name = record.value(1).toString();
-        QSqlQuery namequery(m_sharedDb);
-        if (!namequery.exec("SELECT * FROM '" + name + "' where idx == " + QString::number(index)+ ";"))
-        {
-            QMessageBox::information(0,"Error execing",namequery.executedQuery() + ":::" + namequery.lastError().text());
-        }
-        while (namequery.next())
-        {
-            QSqlRecord namerecord = namequery.record();
-            QString fields = name;
-            for (int i=1;i<namerecord.count();i++)
-            {
-                if (namerecord.value(i).type() == QVariant::Double)
-                {
-                    QString num = QString::number(namerecord.value(i).toDouble(),'f',8);
-                    char last = num.at(num.length()-1).toLatin1();
-                    while (last == '0' && num.length() > 0)
-                    {
-                        num = num.mid(0,num.length()-1);
-                        last = num.at(num.length()-1).toLatin1();
-                    }
-                    if (last == '.')
-                    {
-                        num += "0";
-                    }
-                    fields.append(", " + num);
-                }
-                else if (namerecord.value(i).type() == QVariant::String)
-                {
-                    fields.append(", " + namerecord.value(i).toString());
-                }
-                else
-                {
-                    fields.append(", " + QString::number(namerecord.value(i).toInt()));
-                }
-            }
-            QApplication::processEvents();
-            outputfile.write(fields.append("\r\n").toLatin1());
-        }
     }
-*/
+
     outputfile.close();
     progressDialog->hide();
     progressDialog->deleteLater();
@@ -1786,6 +1496,7 @@ void AP2DataPlot2D::evCheckBoxClicked(bool checked)
 }
 void AP2DataPlot2D::sortItemChanged(QTreeWidgetItem* item,int col)
 {
+    Q_UNUSED(col)
 	//Sorting item changed.
 	if (!item)
 	{
@@ -1806,17 +1517,6 @@ void AP2DataPlot2D::sortItemChanged(QTreeWidgetItem* item,int col)
 			m_tableFilterList.removeOne(msgname);
 		}
 	}
-
-		//Item is enabled!
-		/*    m_tableFilterProxyModel->setFilterFixedString(itemtext);
-    m_tableFilterProxyModel->setFilterRole(Qt::DisplayRole);
-    m_tableFilterProxyModel->setFilterKeyColumn(1);
-    m_showOnlyActive = true;
-}
-void AP2DataPlot2D::showAllClicked()
-{
-    m_tableFilterProxyModel->setFilterRegExp("");*/
-
 }
 void AP2DataPlot2D::sortAcceptClicked()
 {
@@ -1825,7 +1525,6 @@ void AP2DataPlot2D::sortAcceptClicked()
     {
         sortstring += m_tableFilterList.at(i) + ((i == m_tableFilterList.size()-1) ? "" : "|");
     }
-    //sortstring += "]";
     m_tableFilterProxyModel->setFilterRegExp(sortstring);
     m_tableFilterProxyModel->setFilterRole(Qt::DisplayRole);
     m_tableFilterProxyModel->setFilterKeyColumn(1);
@@ -1888,3 +1587,36 @@ void AP2DataPlot2D::childGraphDestroyed(QObject *obj)
         m_childGraphList.removeOne(plot);
     }
 }
+
+void AP2DataPlot2D::logToKmlClicked()
+{
+    QString filename = QFileDialog::getOpenFileName(this, "Open Log File", QGC::logDirectory(), tr("Log Files (*.log)"));
+    QApplication::processEvents(); // Helps clear dialog from screen
+
+    if(filename.length() > 0) {
+        QFile file(filename);
+        if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QString kmlFile(filename);
+            kmlFile.replace(".log", ".kml");
+            kml::KMLCreator kml;
+
+            kml.start(kmlFile);
+            QTextStream in(&file);
+            while(!in.atEnd()) {
+                QString line = in.readLine();
+                kml.processLine(line);
+            }
+
+            QString generated = kml.finish(true);
+            file.close();
+
+            QString msg = QString("Generated %1.").arg(generated);
+            QMessageBox::information(this, "Log to KML", msg);
+        }
+        else {
+            QString msg = QString("Unable to open %1.").arg(filename);
+            QMessageBox::warning(this, "Log to KML", msg, QMessageBox::Ok);
+        }
+    }
+}
+
