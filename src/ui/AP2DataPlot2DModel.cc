@@ -35,6 +35,7 @@ This file is part of the APM_PLANNER project
 #include <QSqlError>
 #include <QUuid>
 #include <QsLog.h>
+#include <ArduPilotMegaMAV.h>
 /*
  * This model holds everything in memory in a sqlite database.
  * There are two system tables, then unlimited number of message tables.
@@ -269,34 +270,72 @@ QMap<quint64,QString> AP2DataPlot2DModel::getModeValues()
     {
         //No mode?
         QLOG_DEBUG() << "Graph loaded with no mode table. Running anyway, but text modes will not be available";
-    }
-    else
-    {
-        while (modequery.next())
+        modequery.prepare("SELECT * FROM 'HEARTBEAT';");
+        if (!modequery.exec())
         {
-            QSqlRecord record = modequery.record();
-            quint64 index = record.value(0).toLongLong();
-            QString mode = "";
-            if (record.contains("Mode"))
+            QLOG_DEBUG() << "Graph loaded with no heartbeat either. No modes available";
+        }
+    }
+    QString lastmode = "";
+    MAV_TYPE foundtype = MAV_TYPE_GENERIC;
+    bool custom_mode = false;
+
+    while (modequery.next())
+    {
+        QSqlRecord record = modequery.record();
+        quint64 index = record.value(0).toLongLong();
+        QString mode = "";
+        if (record.contains("Mode"))
+        {
+            mode = record.value("Mode").toString();
+        }
+        else if (record.contains("custom_mode"))
+        {
+            custom_mode = true;
+            int modeint = record.value("custom_mode").toString().toInt();
+            if (foundtype == MAV_TYPE_GENERIC)
             {
+                int type = record.value("type").toString().toInt();
+                foundtype = static_cast<MAV_TYPE>(type);
+            }
+            if (foundtype == MAV_TYPE_FIXED_WING)
+            {
+                mode = ApmPlane::stringForMode(modeint);
+            }
+            else if (foundtype == MAV_TYPE_QUADROTOR || foundtype == MAV_TYPE_COAXIAL || foundtype == MAV_TYPE_HELICOPTER || \
+                     foundtype == MAV_TYPE_HEXAROTOR || foundtype == MAV_TYPE_OCTOROTOR || foundtype == MAV_TYPE_TRICOPTER)
+            {
+                mode = ApmCopter::stringForMode(modeint);
+            }
+            else if (foundtype == MAV_TYPE_GROUND_ROVER)
+            {
+                mode = ApmRover::stringForMode(modeint);
+            }
+            else
+            {
+                mode = QString::number(static_cast<int>(modeint));
+            }
+        }
+        bool ok = false;
+        int modeint = mode.toInt(&ok);
+        if (!ok && !custom_mode)
+        {
+            if (record.contains("ModeNum"))
+            {
+                mode = record.value("ModeNum").toString();
+            }
+            else
+            {
+                QLOG_DEBUG() << "Unable to determine Mode number in log" << record.value("Mode").toString();
                 mode = record.value("Mode").toString();
             }
-            bool ok = false;
-            int modeint = mode.toInt(&ok);
-            if (!ok)
-            {
-                if (record.contains("ModeNum"))
-                {
-                    mode = record.value("ModeNum").toString();
-                }
-                else
-                {
-                    QLOG_DEBUG() << "Unable to determine Mode number in log" << record.value("Mode").toString();
-                    mode = record.value("Mode").toString();
-                }
-            }
-            retval.insert(index,mode);
         }
+        if (lastmode != mode)
+        {
+            retval.insert(index,mode);
+            lastmode = mode;
+        }
+
     }
     return retval;
 }
@@ -686,7 +725,7 @@ QString AP2DataPlot2DModel::makeCreateTableString(QString tablename, QString for
         }
         else
         {
-            //QLOG_DEBUG() << "AP2DataPlotThread::makeCreateTableString(): NEW UNKNOWN VALUE" << typeCode;
+        QLOG_DEBUG() << "AP2DataPlotThread::makeCreateTableString(): NEW UNKNOWN VALUE" << typeCode;
         }
     }
     mktable.append(");");

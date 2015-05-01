@@ -25,7 +25,8 @@ This file is part of the APM_PLANNER project
 #include "MainWindow.h"
 
 AccelCalibrationConfig::AccelCalibrationConfig(QWidget *parent) : AP2ConfigWidget(parent),
-    m_muted(false)
+    m_muted(false),
+    m_isCalibrating(false)
 {
     ui.setupUi(this);
     connect(ui.calibrateAccelButton,SIGNAL(clicked()),this,SLOT(calibrateButtonClicked()));
@@ -147,6 +148,9 @@ void AccelCalibrationConfig::calibrateButtonClicked()
         showNullMAVErrorMessageBox();
         return;
     }
+
+    m_isCalibrating = true; // this is to guard against showing unwanted GCS Text Messages.
+
     // Mute Audio until calibrated to avoid HeartBeat Warning message
     if (GAudioOutput::instance()->isMuted() == false) {
         GAudioOutput::instance()->mute(true);
@@ -200,6 +204,8 @@ void AccelCalibrationConfig::calibrateButtonClicked()
 
 void AccelCalibrationConfig::hideEvent(QHideEvent *evt)
 {
+    Q_UNUSED(evt);
+
     if (m_muted) { // turns audio backon, when you leave the page
         GAudioOutput::instance()->mute(false);
         m_muted = false;
@@ -219,6 +225,8 @@ void AccelCalibrationConfig::hideEvent(QHideEvent *evt)
 }
 void AccelCalibrationConfig::uasTextMessageReceived(int uasid, int componentid, int severity, QString text)
 {
+    Q_UNUSED(uasid);
+    Q_UNUSED(componentid);
     //command received: " Severity 1
     //Place APM Level and press any key" severity 5
     if (m_isLeveling)
@@ -229,16 +237,23 @@ void AccelCalibrationConfig::uasTextMessageReceived(int uasid, int componentid, 
             m_isLeveling = false;
         }
     }
-    if (severity == 5)
+    if ((severity == 5 /*SEVERITY_USER_RESPONSE*/)||(severity == 3 /*SEVERITY_HIGH*/))
     {
         //This is a calibration instruction
+        if (!m_isCalibrating || text.startsWith("PreArm:") || text.startsWith("EKF") || text.startsWith("Arm"))
+        {
+            // Don't show these warning messages
+            return;
+        }
+
         if (text.contains("Place") && text.contains ("and press any key"))
         {
             //Instruction
             if (m_accelAckCount == 0)
             {
                 //Calibration Sucessful\r"
-                ui.calibrateAccelButton->setText("Continue");
+                ui.calibrateAccelButton->setText("Continue\nPress SpaceBar");
+                ui.calibrateAccelButton->setShortcut(QKeySequence(Qt::Key_Space));
             }
             ui.outputLabel->setText(text);
             m_accelAckCount++;
@@ -256,6 +271,8 @@ void AccelCalibrationConfig::uasTextMessageReceived(int uasid, int componentid, 
             MainWindow::instance()->toolBar().startAnimation();
             m_accelAckCount = 0;
             ui.calibrateAccelButton->setText("Calibrate\nAccelerometer");
+            ui.calibrateAccelButton->setShortcut(QKeySequence());
+            m_isCalibrating = false;
         }
         else
         {

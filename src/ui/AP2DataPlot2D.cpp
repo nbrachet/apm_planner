@@ -391,11 +391,13 @@ void AP2DataPlot2D::plotMouseMove(QMouseEvent *evt)
         }
         else if (graph->data()->contains(key))
         {
-            newresult.append(m_graphClassMap.keys()[i] + ": " + QString::number(graph->data()->value(key).value,'f',4) + ((i == m_graphClassMap.keys().size()-1) ? "" : "\n"));
+            QString str = QString().sprintf( "%.4g", graph->data()->value(key).value);
+            newresult.append(m_graphClassMap.keys()[i] + ": " + str + ((i == m_graphClassMap.keys().size()-1) ? "" : "\n"));
         }
         else if (graph->data()->lowerBound(key) != graph->data()->constEnd())
         {
-            newresult.append(m_graphClassMap.keys()[i] + ": " + QString::number((graph->data()->lowerBound(key).value().value),'f',4) + ((i == m_graphClassMap.keys().size()-1) ? "" : "\n"));
+        	QString str = QString().sprintf( "%.4g", graph->data()->lowerBound(key).value().value);
+            newresult.append(m_graphClassMap.keys()[i] + ": " + str + ((i == m_graphClassMap.keys().size()-1) ? "" : "\n"));
         }
         else
         {
@@ -1262,21 +1264,27 @@ void AP2DataPlot2D::threadDone(int errors,MAV_TYPE type)
                 //It's an integer!
                 switch (type)
                 {
-                    case MAV_TYPE_QUADROTOR:
+                case MAV_TYPE_QUADROTOR:
+                case MAV_TYPE_HEXAROTOR:
+                case MAV_TYPE_OCTOROTOR:
+                case MAV_TYPE_HELICOPTER:
+                case MAV_TYPE_TRICOPTER:
                     {
                         mode = ApmCopter::stringForMode(modeint);
                     }
                     break;
-                    case MAV_TYPE_FIXED_WING:
+                case MAV_TYPE_FIXED_WING:
                     {
                         mode = ApmPlane::stringForMode(modeint);
                     }
                     break;
-                    case MAV_TYPE_GROUND_ROVER:
+                case MAV_TYPE_GROUND_ROVER:
                     {
                         mode = ApmRover::stringForMode(modeint);
                     }
                     break;
+                default:
+                    mode = QString().sprintf("Mode (%d)", modeint);
                 }
             }
             QLOG_DEBUG() << "Mode change at index" << index << "to" << mode;
