@@ -22,45 +22,44 @@ This file is part of the APM_PLANNER project
 
 /**
  * @file
- *   @brief Accelerometer calibration for multi-rotor helicoptors
+ *   @brief PID configuration for ArduCoptor (multi-rotor air vehicle)
+ *          for version Copter3.3+
  *
  *   @author Michael Carpenter <malcom2073@gmail.com>
+ *   @author Bill Bonney Carpenter <billbonney@communistech.com>
  */
 
-#ifndef ACCELCALIBRATIONCONFIG_H
-#define ACCELCALIBRATIONCONFIG_H
+#ifndef COPTERPIDCONFIG_H
+#define COPTERPIDCONFIG_H
 
 #include <QWidget>
-#include "ui_AccelCalibrationConfig.h"
-#include "UASManager.h"
-#include "UASInterface.h"
+#include "ui_CopterPidConfig.h"
+
 #include "AP2ConfigWidget.h"
 
-class AccelCalibrationConfig : public AP2ConfigWidget
+class CopterPidConfig : public AP2ConfigWidget
 {
     Q_OBJECT
     
-    static const int CALIBRATION_TIMEOUT_SEC = 40;
 public:
-    explicit AccelCalibrationConfig(QWidget *parent = 0);
-    ~AccelCalibrationConfig();
-protected:
-    void hideEvent(QHideEvent *evt);
+    explicit CopterPidConfig(QWidget *parent = 0);
+    ~CopterPidConfig();
 private slots:
-    void activeUASSet(UASInterface *uas);
-    void calibrateButtonClicked();
-    void uasTextMessageReceived(int uasid, int componentid, int severity, QString text);
-    void uasConnected();
-    void uasDisconnected();
-    void countdownTimerTick();
-
+    void writeButtonClicked();
+    void refreshButtonClicked();
+    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    void lockCheckBoxClicked(bool checked);
+    void stabilLockedChanged(double value);
+    void ratePChanged(double value);
+    void rateIChanged(double value);
+    void rateDChanged(double value);
+    void rateIMAXChanged(double value);
 private:
-    int m_accelAckCount;
-    Ui::AccelCalibrationConfig ui;
-    bool m_muted;
-    bool m_isCalibrating;
-    QTimer m_countdownTimer;
-    int m_countdownCount;
+    bool m_pitchRollLocked;
+    QList<QPair<int,QString> > m_ch6ValueToTextList;
+    QList<QPair<int,QString> > m_ch78ValueToTextList;
+    QMap<QString,QDoubleSpinBox*> m_nameToBoxMap;
+    Ui::CopterPidConfig ui;
 };
 
-#endif // ACCELCALIBRATIONCONFIG_H
+#endif // COPTERPIDCONFIG_H
