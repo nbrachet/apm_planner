@@ -32,6 +32,7 @@ This file is part of the PIXHAWK project
 #define JOYSTICKWIDGET_H
 
 #include <QtWidgets/QDialog>
+#include <QLabel>
 
 #include "JoystickInput.h"
 #include "UASInterface.h"
@@ -75,7 +76,7 @@ public slots:
     /** @brief Clear keys */
     void clearKeys();
     /** @brief Joystick keys, as labeled on the joystick */
-    void pressKey(int key);
+    void buttonStateChanged(const int key, const bool pressed);
     /** @brief Update status string */
     void updateStatus(const QString& status);
 
@@ -86,6 +87,11 @@ protected slots:
 
     void activeUASSet(UASInterface*);
 
+private slots:
+    void storeMapping();
+
+    void restoreMapping();
+
 protected:
     /** @brief UI change event */
     virtual void changeEvent(QEvent *e);
@@ -93,6 +99,16 @@ protected:
 private:
     Ui::JoystickWidget *m_ui;
     JoystickInput* joystick;  ///< Reference to the joystick
+
+    int m_buttonStates[11];
+
+    QString m_buttonPressedMessage;
+
+    QList<QLabel*> m_buttonList;
+
+    void addJoystickButtonLabel(int i);
+
+    void updateMappings();
 };
 
 #endif // JOYSTICKWIDGET_H

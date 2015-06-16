@@ -59,6 +59,10 @@ public:
 
     const QString& getName() const;
 
+    const QString getActiveJoystickId();
+
+    const int getNumberOfButtons() const;
+
     /**
      * @brief Load joystick settings
      */
@@ -67,7 +71,7 @@ public:
     /**
      * @brief Store joystick settings
      */
-    void storeSettings() const;
+    void storeSettings();
 
     int getMappingThrustAxis() const
     {
